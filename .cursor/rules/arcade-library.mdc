@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+We're using the Arcade Python Library to build our game, here's the git for it: https://github.com/pythonarcade/arcade
