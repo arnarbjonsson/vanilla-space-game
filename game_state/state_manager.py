@@ -2,8 +2,10 @@
 State Manager - manages game state and processes input commands
 """
 
+import random
 from game_state.game_state import GameState
 from entities.player_entity import PlayerEntity
+from entities.asteroid_entity import AsteroidEntity
 from input.commands import InputCommand
 from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
 
@@ -26,9 +28,36 @@ class StateManager:
         self.current_state.player_entity = player
         self.current_state.add_entity(player)
         
+        # Create some test asteroids
+        self._spawn_initial_asteroids()
+        
         # Initialize game state
         self.current_state.score = 0
         self.current_state.is_game_running = True
+        
+    def _spawn_initial_asteroids(self):
+        """Spawn some initial asteroids for testing"""
+        player_x = SCREEN_WIDTH // 2
+        player_y = 100
+        min_distance_from_player = 200  # Minimum distance from player
+        
+        for i in range(12):  # Create 12 test asteroids
+            # Keep trying until we find a good position
+            attempts = 0
+            while attempts < 50:  # Prevent infinite loop
+                x = random.uniform(50, SCREEN_WIDTH - 50)
+                y = random.uniform(50, SCREEN_HEIGHT - 50)
+                
+                # Check distance from player
+                distance = ((x - player_x) ** 2 + (y - player_y) ** 2) ** 0.5
+                
+                if distance >= min_distance_from_player:
+                    break  # Found a good position
+                    
+                attempts += 1
+            
+            asteroid = AsteroidEntity(x, y)
+            self.current_state.add_entity(asteroid)
         
     def update(self, delta_time, input_commands):
         """Update game state based on time and input commands"""

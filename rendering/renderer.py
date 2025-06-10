@@ -5,7 +5,9 @@ Renderer - handles all visual rendering using entity-specific renderers
 import arcade
 from core.constants import *
 from entities.player_entity import PlayerEntity
+from entities.asteroid_entity import AsteroidEntity
 from rendering.player_renderer import PlayerRenderer
+from rendering.asteroid_renderer import AsteroidRenderer
 from rendering.background_renderer import BackgroundRenderer
 from ui.ui_renderer import UIRenderer
 
@@ -17,6 +19,7 @@ class Renderer:
         """Initialize the renderer with entity-specific renderers"""
         self.background_renderer = BackgroundRenderer()
         self.player_renderer = PlayerRenderer()
+        self.asteroid_renderer = AsteroidRenderer()
         self.ui_renderer = UIRenderer()
         
     def initialize(self):
@@ -38,6 +41,8 @@ class Renderer:
         for entity in entities:
             if isinstance(entity, PlayerEntity):
                 self.player_renderer.render(entity)
+            elif isinstance(entity, AsteroidEntity):
+                self.asteroid_renderer.render(entity)
             # Add other entity types here as needed
         
     def _render_thrust_flames(self, player):

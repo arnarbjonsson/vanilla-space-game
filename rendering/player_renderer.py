@@ -3,24 +3,58 @@ Player Renderer - handles rendering of player entities
 """
 
 import arcade
-from rendering.base_renderer import BaseRenderer
+import math
+from rendering.base_renderer import BaseRenderer, CoordinateTransform
 from core.constants import *
 
+TEXTURE_SCALE = 0.5
 
 class PlayerRenderer(BaseRenderer):
     """Handles rendering of player entities"""
     
+    def __init__(self):
+        """Initialize the player renderer"""
+        self.spaceship_texture = None
+        self._load_textures()
+    
+    def _load_textures(self):
+        """Load the spaceship texture"""
+        try:
+            self.spaceship_texture = arcade.load_texture("assets/spaceship.png")
+        except FileNotFoundError:
+            print("Warning: Could not load assets/spaceship.png")
+            self.spaceship_texture = None
+    
     def render_local(self, entity, transform):
         """Render the player entity in local coordinates (0,0 with 0 rotation)"""
-        # Draw ship in local space
-        self._draw_ship_local(transform)
+        # Draw ship texture at world position
+        self._draw_ship_texture(entity)
         
-        # Draw thrust flame if thrusting
+        # Draw thrust flame if thrusting (still using local coordinates)
         if entity.is_thrusting:
             self._draw_thrust_flame_local(transform)
-                
-    def _draw_ship_local(self, transform):
-        """Draw ship in local coordinates (pointing up at 0,0)"""
+    
+    def _draw_ship_texture(self, entity):
+        """Draw the spaceship texture at the entity's world position"""
+        if self.spaceship_texture:
+            # Draw the texture at the entity's world position with its rotation
+            # Add 90 degrees to correct the texture orientation (90° clockwise)
+            arcade.draw_texture_rect(
+                self.spaceship_texture,
+                arcade.XYWH(entity.x, entity.y, 
+                           self.spaceship_texture.width * TEXTURE_SCALE, 
+                           self.spaceship_texture.height * TEXTURE_SCALE),
+                angle=90 -entity.rotation,
+            )
+        else:
+            # Fallback: draw the original triangle if texture fails to load
+            self._draw_ship_local_fallback(entity)
+    
+    def _draw_ship_local_fallback(self, entity):
+        """Fallback triangle drawing if texture is not available"""
+        # Create transform for fallback triangle
+        transform = CoordinateTransform(entity.x, entity.y, entity.rotation)
+        
         size = 30
         
         # Ship triangle in local space - always pointing up
@@ -46,8 +80,6 @@ class PlayerRenderer(BaseRenderer):
             
     def _draw_thrust_flame_local(self, transform):
         """Draw thrust flame in local coordinates"""
-        print("Drawing flame in local coordinates")  # Debug
-        
         # In local space, ship points up (0, positive Y)
         # So flame goes down (0, negative Y) from the back of the ship
         flame_start_local = (0, -15)  # Back of ship

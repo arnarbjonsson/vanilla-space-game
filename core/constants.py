@@ -3,7 +3,7 @@ Core constants and configuration settings
 """
 
 # Screen dimensions
-SCREEN_WIDTH = 1600
+SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 1200
 SCREEN_TITLE = "Vanilla Space Game"
 

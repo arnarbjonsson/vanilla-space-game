@@ -1,29 +1,54 @@
 # Vanilla Space Game
 
-A classic space shooter game built with Python Arcade and managed with pipenv.
+A space exploration and mining game built with Python Arcade featuring realistic physics and clean architecture.
 
 ## Features
 
-- **Player Controls**: Move left/right with arrow keys or A/D, shoot with spacebar
-- **Dynamic Enemies**: Enemies with different movement patterns (straight, zigzag, sine wave)
-- **Collision Detection**: Bullets destroy enemies, enemies can hit the player
-- **Score System**: Earn points by destroying enemies
-- **Clean Architecture**: Well-structured code with separated concerns
+- **Realistic Spaceship Physics**: Thrust-based movement with momentum and drag
+- **Asteroid Mining System**: Stationary asteroids with different ore types and quantities
+- **Dynamic Visuals**: Spaceship textures and rotating asteroids with varied appearances
+- **Clean Architecture**: Entity-Component-System design with separated rendering
+- **Frame-Rate Independent**: Smooth gameplay regardless of system performance
+
+## Current Gameplay
+
+- **Spaceship Control**: Fly around with realistic thrust physics
+- **Asteroid Field**: Navigate through 12 randomly distributed asteroids
+- **Ore Resources**: Each asteroid contains different ore types (iron, copper, gold, platinum)
+- **Visual Variety**: 6 different asteroid textures with random sizes and subtle rotation
+- **Space Physics**: Momentum-based movement with natural deceleration
 
 ## Project Structure
 
 ```
 vanilla-space-game/
-├── main.py                 # Main entry point
-├── game/
-│   ├── __init__.py        # Package initialization
-│   ├── constants.py       # Game configuration and constants
-│   ├── space_game.py      # Main game class and game loop
-│   ├── player.py          # Player spaceship class
-│   ├── enemy.py           # Enemy spaceship classes
-│   └── bullet.py          # Bullet/projectile classes
-├── Pipfile                # Pipenv dependencies
-└── README.md              # This file
+├── main.py                     # Main entry point
+├── core/
+│   ├── constants.py           # Game configuration and constants
+│   └── game_loop.py           # Main game loop coordination
+├── entities/
+│   ├── base_entity.py         # Abstract base class for all entities
+│   ├── player_entity.py       # Player spaceship with physics
+│   └── asteroid_entity.py     # Asteroid entities with ore properties
+├── rendering/
+│   ├── base_renderer.py       # Abstract renderer with coordinate transforms
+│   ├── renderer.py            # Main renderer coordinator
+│   ├── player_renderer.py     # Spaceship rendering with local coordinates
+│   ├── asteroid_renderer.py   # Asteroid rendering with texture variation
+│   └── background_renderer.py # Background image rendering
+├── input/
+│   ├── commands.py            # Input command enumeration
+│   └── input_system.py        # Input handling and command generation
+├── game_state/
+│   ├── game_state.py          # Game state data container
+│   └── state_manager.py       # Game state management and updates
+├── ui/
+│   └── ui_renderer.py         # User interface rendering
+├── assets/
+│   ├── spaceship.png          # Player spaceship texture
+│   ├── asteroid1-6.png        # Six different asteroid textures
+│   └── background.png         # Space background image
+└── Pipfile                    # Pipenv dependencies
 ```
 
 ## Installation & Setup
@@ -41,68 +66,92 @@ vanilla-space-game/
 
 2. **Install dependencies**:
    ```bash
-   python -m pipenv install
-   ```
-
-3. **Activate the virtual environment**:
-   ```bash
-   python -m pipenv shell
+   pipenv install
    ```
 
 ## Running the Game
 
 ```bash
-python main.py
-```
-
-Or with pipenv:
-```bash
-python -m pipenv run python main.py
+pipenv run python main.py
 ```
 
 ## Game Controls
 
-- **Movement**: Arrow Keys (←/→) or A/D keys
-- **Shoot**: Spacebar
-- **Quit**: Close the window or press Alt+F4
+- **Rotation**: A/D keys (rotate left/right)
+- **Thrust**: W key (accelerate forward)
+- **Pause**: Esc key
+- **Quit**: Close the window
 
 ## Game Mechanics
 
-- **Player**: Blue triangle at the bottom of the screen
-- **Enemies**: Red squares that spawn from the top with various movement patterns
-- **Bullets**: Yellow projectiles fired by the player
-- **Scoring**: 10 points per enemy destroyed
-- **Collision**: Game over when an enemy hits the player
+### Spaceship Physics
+- **Thrust-based Movement**: Ship accelerates in the direction it's facing
+- **Momentum**: Ship continues moving when not thrusting
+- **Drag**: Natural deceleration over time (frame-rate independent)
+- **Screen Wrapping**: Ship wraps around screen edges
 
-## Architecture
+### Asteroid System
+- **Stationary Asteroids**: 12 asteroids distributed across the play area
+- **Ore Resources**: Each asteroid contains 3-10 units of ore
+- **Ore Types**: Iron, copper, gold, and platinum
+- **Visual Variety**: 6 different textures with random scaling (15-45% size)
+- **Subtle Rotation**: Each asteroid rotates slowly (3-5 degrees/second)
 
-The game follows clean architecture principles:
+### Technical Features
+- **Local Coordinate System**: Clean rendering with position/rotation transforms
+- **Entity-Component Architecture**: Modular design for easy expansion
+- **Frame-Rate Independence**: Consistent physics regardless of FPS
+- **Asset Management**: Efficient texture loading with fallback rendering
 
-- **Small, clear methods**: Each method has a single responsibility
-- **Contained classes**: Each game entity is in its own class and file
-- **Separation of concerns**: Game logic, rendering, and input handling are separated
-- **Modular design**: Easy to extend with new features
+## Architecture Highlights
+
+The game demonstrates professional game development patterns:
+
+### Entity-Component-System (ECS)
+- **Entities**: Game objects with data (player, asteroids)
+- **Systems**: Logic processors (input, physics, rendering)
+- **Components**: Reusable data containers and behaviors
+
+### Rendering Pipeline
+- **Local Coordinates**: Entities work in local space for cleaner logic
+- **Coordinate Transforms**: Automatic world-space conversion for rendering
+- **Renderer Separation**: Each entity type has its dedicated renderer
+- **Fallback Systems**: Graceful degradation if textures fail to load
+
+### Input System
+- **Command Pattern**: Input converted to abstract commands
+- **Frame-Rate Independent**: Smooth controls regardless of FPS
+- **Extensible**: Easy to add new input types and bindings
 
 ## Development
 
 ### Adding New Features
 
-1. **New Enemy Types**: Extend the `Enemy` class in `game/enemy.py`
-2. **Power-ups**: Create new classes similar to existing entities
-3. **Game States**: Add menu/game over screens in `space_game.py`
-4. **Sound Effects**: Add sound loading and playing in appropriate classes
+1. **New Entity Types**: Extend `BaseEntity` and create corresponding renderer
+2. **Mining Mechanics**: Use existing `asteroid.mine_ore()` method
+3. **Weapons System**: Add bullet entities and collision detection
+4. **UI Elements**: Extend `UIRenderer` for new interface components
 
 ### Code Style
 
-- Use clear, descriptive method names
-- Keep methods small and focused
-- Add docstrings to all classes and methods
-- Follow PEP 8 style guidelines
+- **Clean Architecture**: Small, focused classes with single responsibilities
+- **Separation of Concerns**: Clear boundaries between input, logic, and rendering
+- **Local Coordinates**: Use coordinate transforms for clean entity logic
+- **Frame-Rate Independence**: Always use `delta_time` for time-based calculations
 
 ## Dependencies
 
-- **arcade**: 2D game development library
-- **Python 3.11**: Core language
+- **arcade**: Modern 2D game development library
+- **Python 3.11**: Core language with type hints support
+
+## Future Enhancements
+
+- Asteroid mining mechanics
+- Resource collection and management
+- Weapon systems for asteroid breaking
+- Upgrade system for spaceship
+- Multiple asteroid fields/levels
+- Sound effects and music
 
 ## License
 

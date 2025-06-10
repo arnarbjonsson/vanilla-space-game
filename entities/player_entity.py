@@ -25,7 +25,7 @@ class PlayerEntity(BaseEntity):
         self.rotation_speed = 180  # degrees per second
         self.thrust_power = 300    # pixels per second squared
         self.max_velocity = 400    # pixels per second
-        self.drag = 0.98          # velocity multiplier per frame (friction)
+        self.drag = 0.5           # drag coefficient (higher = more drag)
         
         # Gameplay properties
         self.health = 100
@@ -60,12 +60,11 @@ class PlayerEntity(BaseEntity):
     def _apply_thrust(self, delta_time):
         """Apply thrust force in the direction the ship is facing"""
         # Convert rotation to radians (0 degrees = pointing up)
-        # Reverse the thrust direction to go forward instead of backward
         angle_rad = math.radians(self.rotation)
         
-        # Calculate thrust components - reversed to go forward
-        thrust_x = -math.sin(angle_rad) * self.thrust_power * delta_time
-        thrust_y = math.cos(angle_rad) * self.thrust_power * delta_time  # Positive cos for up direction
+        # Calculate thrust components (0° = up, 90° = right, etc.)
+        thrust_x = math.cos(angle_rad) * self.thrust_power * delta_time
+        thrust_y = math.sin(angle_rad) * self.thrust_power * delta_time
         
         # Add to velocity
         self.velocity_x += thrust_x
@@ -85,9 +84,11 @@ class PlayerEntity(BaseEntity):
         self.x += self.velocity_x * delta_time
         self.y += self.velocity_y * delta_time
         
-        # Apply drag
-        self.velocity_x *= self.drag
-        self.velocity_y *= self.drag
+        # Apply drag (frame-rate independent)
+        # Higher drag values now mean more drag (more intuitive)
+        drag_factor = max(0.0, 1.0 - self.drag * delta_time)
+        self.velocity_x *= drag_factor
+        self.velocity_y *= drag_factor
         
     def _handle_screen_bounds(self):
         """Handle player hitting screen boundaries with wrap-around"""
