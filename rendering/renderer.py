@@ -6,6 +6,7 @@ import arcade
 from core.constants import *
 from entities.player_entity import PlayerEntity
 from rendering.player_renderer import PlayerRenderer
+from rendering.background_renderer import BackgroundRenderer
 from ui.ui_renderer import UIRenderer
 
 
@@ -14,16 +15,21 @@ class Renderer:
     
     def __init__(self):
         """Initialize the renderer with entity-specific renderers"""
+        self.background_renderer = BackgroundRenderer()
         self.player_renderer = PlayerRenderer()
         self.ui_renderer = UIRenderer()
         
     def initialize(self):
         """Initialize renderer resources"""
-        # Set up any textures, fonts, or other rendering resources here
-        pass
+        # Initialize all sub-renderers
+        self.background_renderer.initialize()
         
     def render(self, game_state):
         """Render the current game state"""
+        # Render background first
+        self.background_renderer.render()
+        
+        # Then render all other elements
         self._render_entities(game_state.entities)
         self.ui_renderer.render(game_state)
             
