@@ -27,6 +27,7 @@ class StateManager:
         # Create and add player entity at center bottom of larger screen
         player = PlayerEntity(SCREEN_WIDTH // 2, 100)  # Increased from 50 to 100 for better positioning
         player.set_game_state(self.current_state)  # Give player access to game state for modules
+        
         self.current_state.player_entity = player
         self.current_state.add_entity(player)
         
@@ -136,4 +137,4 @@ class StateManager:
         
     def get_current_state(self):
         """Get the current game state"""
-        return self.current_state 
+        return self.current_state

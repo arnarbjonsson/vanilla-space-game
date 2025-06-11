@@ -7,6 +7,14 @@ from entities.base_entity import BaseEntity
 from input.commands import InputCommand
 from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
 
+# Player Ship Constants - Easy to tune
+PLAYER_ROTATION_SPEED = 180     # degrees per second
+PLAYER_THRUST_POWER = 300       # pixels per second squared  
+PLAYER_MAX_VELOCITY = 400       # pixels per second
+PLAYER_DRAG = 0.5              # drag coefficient (higher = more drag)
+PLAYER_MAX_HEALTH = 100        # maximum health points
+PLAYER_MAX_MODULES = 4         # maximum number of modules that can be equipped
+
 
 class PlayerEntity(BaseEntity):
     """Player spaceship entity with rotation and thrust physics"""
@@ -21,19 +29,13 @@ class PlayerEntity(BaseEntity):
         self.velocity_y = 0
         self.is_thrusting = False
         
-        # Physics constants
-        self.rotation_speed = 180  # degrees per second
-        self.thrust_power = 300    # pixels per second squared
-        self.max_velocity = 400    # pixels per second
-        self.drag = 0.5           # drag coefficient (higher = more drag)
-        
         # Gameplay properties
-        self.health = 100
-        self.max_health = 100
+        self.health = PLAYER_MAX_HEALTH
+        self.max_health = PLAYER_MAX_HEALTH
         
         # Module system
         self.modules = []  # List of equipped modules
-        self.max_modules = 4  # Maximum number of modules that can be equipped
+        self.max_modules = PLAYER_MAX_MODULES  # Maximum number of modules that can be equipped
         
         # Game state reference (for modules to access other entities)
         self.game_state = None
@@ -55,9 +57,9 @@ class PlayerEntity(BaseEntity):
         
         for command in commands:
             if command == InputCommand.ROTATE_LEFT:
-                self.rotation += self.rotation_speed * delta_time  # A key: turn left 
+                self.rotation += PLAYER_ROTATION_SPEED * delta_time  # A key: turn left 
             elif command == InputCommand.ROTATE_RIGHT:
-                self.rotation -= self.rotation_speed * delta_time  # D key: turn right
+                self.rotation -= PLAYER_ROTATION_SPEED * delta_time  # D key: turn right
             elif command == InputCommand.THRUST:
                 self._apply_thrust(delta_time)
                 self.is_thrusting = True
@@ -71,8 +73,8 @@ class PlayerEntity(BaseEntity):
         angle_rad = math.radians(self.rotation)
         
         # Calculate thrust components (0° = up, 90° = right, etc.)
-        thrust_x = math.cos(angle_rad) * self.thrust_power * delta_time
-        thrust_y = math.sin(angle_rad) * self.thrust_power * delta_time
+        thrust_x = math.cos(angle_rad) * PLAYER_THRUST_POWER * delta_time
+        thrust_y = math.sin(angle_rad) * PLAYER_THRUST_POWER * delta_time
         
         # Add to velocity
         self.velocity_x += thrust_x
@@ -81,8 +83,8 @@ class PlayerEntity(BaseEntity):
         # Cap maximum velocity
         velocity_magnitude = math.sqrt(self.velocity_x**2 + self.velocity_y**2)
         
-        if velocity_magnitude > self.max_velocity:
-            scale = self.max_velocity / velocity_magnitude
+        if velocity_magnitude > PLAYER_MAX_VELOCITY:
+            scale = PLAYER_MAX_VELOCITY / velocity_magnitude
             self.velocity_x *= scale
             self.velocity_y *= scale
             
@@ -94,7 +96,7 @@ class PlayerEntity(BaseEntity):
         
         # Apply drag (frame-rate independent)
         # Higher drag values now mean more drag (more intuitive)
-        drag_factor = max(0.0, 1.0 - self.drag * delta_time)
+        drag_factor = max(0.0, 1.0 - PLAYER_DRAG * delta_time)
         self.velocity_x *= drag_factor
         self.velocity_y *= drag_factor
         
@@ -151,7 +153,7 @@ class PlayerEntity(BaseEntity):
         Returns:
             bool: True if module was successfully equipped
         """
-        if len(self.modules) >= self.max_modules:
+        if len(self.modules) >= PLAYER_MAX_MODULES:
             return False  # Ship is full
             
         if module in self.modules:
@@ -159,6 +161,7 @@ class PlayerEntity(BaseEntity):
             
         self.modules.append(module)
         module.equip_to_ship(self)
+        
         return True
     
     def unequip_module(self, module):
@@ -206,7 +209,7 @@ class PlayerEntity(BaseEntity):
     
     def has_module_slot_available(self):
         """Check if there's an available slot for a new module"""
-        return len(self.modules) < self.max_modules
+        return len(self.modules) < PLAYER_MAX_MODULES
     
     # Target selection methods for modules
     def find_closest_asteroid(self, max_range=None):

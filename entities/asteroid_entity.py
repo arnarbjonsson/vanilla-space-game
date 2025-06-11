@@ -5,6 +5,27 @@ Asteroid Entity - handles stationary asteroids with ore resources
 import random
 from entities.base_entity import BaseEntity
 
+# Asteroid Constants - Easy to tune
+ASTEROID_TYPES_COUNT = 6           # Number of different asteroid textures (1-6)
+ASTEROID_MIN_SCALE = 0.15         # Minimum size scale factor
+ASTEROID_MAX_SCALE = 0.45         # Maximum size scale factor
+ASTEROID_MIN_ROTATION_SPEED = 3   # Minimum rotation speed (degrees/second)
+ASTEROID_MAX_ROTATION_SPEED = 5   # Maximum rotation speed (degrees/second)
+ASTEROID_MIN_ORE = 3              # Minimum ore amount per asteroid
+ASTEROID_MAX_ORE = 10             # Maximum ore amount per asteroid
+
+# Asteroid collision radii by type (base values before scaling)
+ASTEROID_BASE_RADII = {
+    1: 40,  # asteroid1.png
+    2: 35,  # asteroid2.png  
+    3: 30,  # asteroid3.png
+    4: 45,  # asteroid4.png
+    5: 25,  # asteroid5.png
+    6: 20   # asteroid6.png
+}
+
+ORE_TYPES = ['iron', 'copper', 'gold', 'platinum']
+
 
 class AsteroidEntity(BaseEntity):
     """Stationary asteroid entity with ore resources"""
@@ -14,19 +35,19 @@ class AsteroidEntity(BaseEntity):
         super().__init__(x, y)
         
         # Visual properties
-        self.asteroid_type = random.randint(1, 6)  # Which asteroid asset to use (1-6)
-        self.scale = random.uniform(0.15, 0.45)  # Random size variation (30% of original size)
+        self.asteroid_type = random.randint(1, ASTEROID_TYPES_COUNT)  # Which asteroid asset to use
+        self.scale = random.uniform(ASTEROID_MIN_SCALE, ASTEROID_MAX_SCALE)  # Random size variation
         
         # Rotation properties (subtle rotation)
         self.rotation = random.uniform(0, 360)  # Start with random rotation
-        # Random direction and speed between 3-5 degrees per second
-        speed = random.uniform(3, 5)
+        # Random direction and speed
+        speed = random.uniform(ASTEROID_MIN_ROTATION_SPEED, ASTEROID_MAX_ROTATION_SPEED)
         direction = random.choice([-1, 1])  # Either clockwise (-) or counter-clockwise (+)
         self.rotation_speed = speed * direction
         
         # Ore properties
-        self.ore_type = random.choice(['iron', 'copper', 'gold', 'platinum'])
-        self.ore_remaining = random.randint(3, 10)  # How much ore this asteroid contains
+        self.ore_type = random.choice(ORE_TYPES)
+        self.ore_remaining = random.randint(ASTEROID_MIN_ORE, ASTEROID_MAX_ORE)  # How much ore this asteroid contains
         
     def update(self, delta_time, input_commands=None):
         """Update asteroid logic (rotation and depletion check)"""
@@ -58,16 +79,7 @@ class AsteroidEntity(BaseEntity):
     def get_collision_radius(self):
         """Get the collision radius based on asteroid type and scale"""
         # Base radius varies by asteroid type, scaled by the scale factor
-        base_radii = {
-            1: 40,  # asteroid1.png
-            2: 35,  # asteroid2.png  
-            3: 30,  # asteroid3.png
-            4: 45,  # asteroid4.png
-            5: 25,  # asteroid5.png
-            6: 20   # asteroid6.png
-        }
-        
-        base_radius = base_radii.get(self.asteroid_type, 30)
+        base_radius = ASTEROID_BASE_RADII.get(self.asteroid_type, 30)
         return base_radius * self.scale
         
     def is_depleted(self):

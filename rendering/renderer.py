@@ -9,6 +9,7 @@ from entities.asteroid_entity import AsteroidEntity
 from rendering.player_renderer import PlayerRenderer
 from rendering.asteroid_renderer import AsteroidRenderer
 from rendering.background_renderer import BackgroundRenderer
+from rendering.effects_renderer import EffectsRenderer
 from ui.ui_renderer import UIRenderer
 
 
@@ -20,6 +21,7 @@ class Renderer:
         self.background_renderer = BackgroundRenderer()
         self.player_renderer = PlayerRenderer()
         self.asteroid_renderer = AsteroidRenderer()
+        self.effects_renderer = EffectsRenderer()
         self.ui_renderer = UIRenderer()
         
     def initialize(self):
@@ -32,8 +34,13 @@ class Renderer:
         # Render background first
         self.background_renderer.render()
         
-        # Then render all other elements
+        # Then render all entities
         self._render_entities(game_state.entities)
+        
+        # Render effects between entities
+        self.effects_renderer.render_effects(game_state)
+        
+        # Finally render UI on top
         self.ui_renderer.render(game_state)
             
     def handle_mouse_click(self, x, y, game_state):
@@ -87,4 +94,4 @@ class Renderer:
         
         # Draw flame as a thick line from ship rear to flame end
         arcade.draw_line(rear_x, rear_y, flame_end_x, flame_end_y, 
-                        arcade.color.ORANGE, flame_width) 
+                        arcade.color.ORANGE, flame_width)

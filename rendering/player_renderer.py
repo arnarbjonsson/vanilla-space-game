@@ -7,7 +7,13 @@ import math
 from rendering.base_renderer import BaseRenderer, CoordinateTransform
 from core.constants import *
 
-TEXTURE_SCALE = 0.5
+# Player Rendering Constants - Easy to tune
+TEXTURE_SCALE = 0.5            # Scale factor for spaceship texture
+SHIP_SIZE = 30                 # Size of fallback triangle ship
+THRUST_FLAME_LENGTH = 45       # Length of thrust flame
+THRUST_FLAME_WIDTH = 6         # Width of thrust flame line
+FLAME_START_DISTANCE = 15      # Distance from ship center to flame start
+FLAME_END_DISTANCE = 60        # Distance from ship center to flame end
 
 class PlayerRenderer(BaseRenderer):
     """Handles rendering of player entities"""
@@ -55,13 +61,11 @@ class PlayerRenderer(BaseRenderer):
         # Create transform for fallback triangle
         transform = CoordinateTransform(entity.x, entity.y, entity.rotation)
         
-        size = 30
-        
         # Ship triangle in local space - always pointing up
         local_points = [
-            (0, size),          # nose (top)
-            (-size//2, -size//2),   # bottom left
-            (size//2, -size//2)     # bottom right
+            (0, SHIP_SIZE),          # nose (top)
+            (-SHIP_SIZE//2, -SHIP_SIZE//2),   # bottom left
+            (SHIP_SIZE//2, -SHIP_SIZE//2)     # bottom right
         ]
         
         # Transform all points to world coordinates
@@ -82,15 +86,15 @@ class PlayerRenderer(BaseRenderer):
         """Draw thrust flame in local coordinates"""
         # In local space, ship points up (0, positive Y)
         # So flame goes down (0, negative Y) from the back of the ship
-        flame_start_local = (0, -15)  # Back of ship
-        flame_end_local = (0, -60)    # Flame extends down
+        flame_start_local = (0, -FLAME_START_DISTANCE)  # Back of ship
+        flame_end_local = (0, -FLAME_END_DISTANCE)      # Flame extends down
         
         # Transform to world coordinates
         flame_start_x, flame_start_y = transform.to_world(*flame_start_local)
         flame_end_x, flame_end_y = transform.to_world(*flame_end_local)
         
         # Draw flame line
-        arcade.draw_line(flame_start_x, flame_start_y, flame_end_x, flame_end_y, YELLOW, 6)
+        arcade.draw_line(flame_start_x, flame_start_y, flame_end_x, flame_end_y, YELLOW, THRUST_FLAME_WIDTH)
         
         # Debug circle at flame start
         arcade.draw_circle_filled(flame_start_x, flame_start_y, 3, RED) 
