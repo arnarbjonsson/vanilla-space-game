@@ -8,10 +8,10 @@ from input.commands import InputCommand
 from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
 
 # Player Ship Constants - Easy to tune
-PLAYER_ROTATION_SPEED = 180     # degrees per second
-PLAYER_THRUST_POWER = 300       # pixels per second squared  
-PLAYER_MAX_VELOCITY = 400       # pixels per second
-PLAYER_DRAG = 0.5              # drag coefficient (higher = more drag)
+PLAYER_ROTATION_SPEED = 100     # degrees per second
+PLAYER_THRUST_POWER = 100       # pixels per second squared
+PLAYER_MAX_VELOCITY = 80       # pixels per second
+PLAYER_DRAG = 0.2              # drag coefficient (higher = more drag)
 PLAYER_MAX_HEALTH = 100        # maximum health points
 PLAYER_MAX_MODULES = 4         # maximum number of modules that can be equipped
 

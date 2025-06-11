@@ -76,12 +76,11 @@ class BaseModule(ABC):
         self.state = ModuleState.ACTIVE
         self.last_activation_time = time.time()
         
-        # Execute the module's effect
-        success = self._execute_module_effect(ship_entity)
+        # Start the module's effect
+        success = self.on_module_effect_start(ship_entity)
         
         if success:
-            # Start cooldown
-            self._start_cooldown()
+            # Don't start cooldown yet - let _update_active_state handle it
             return True
         else:
             # Reset state if execution failed
@@ -124,15 +123,28 @@ class BaseModule(ABC):
     
     # Abstract methods to be implemented by subclasses
     @abstractmethod
-    def _execute_module_effect(self, ship_entity):
+    def on_module_effect_start(self, ship_entity):
         """
-        Execute the module's effect on the ship
+        Called when the module effect starts
         
         Args:
             ship_entity: The ship this module is equipped to
             
         Returns:
-            bool: True if effect was successfully applied
+            bool: True if effect start was successful
+        """
+        pass
+    
+    @abstractmethod
+    def on_module_effect_end(self, ship_entity):
+        """
+        Called when the module effect ends
+        
+        Args:
+            ship_entity: The ship this module is equipped to
+            
+        Returns:
+            bool: True if effect end was successful
         """
         pass
     

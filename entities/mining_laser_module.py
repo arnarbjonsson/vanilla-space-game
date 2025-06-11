@@ -5,13 +5,18 @@ Mining Laser Module - mines ore from nearby asteroids
 import math
 from entities.base_module import BaseModule
 import time
+import arcade
 
 # Mining Laser Constants - Easy to tune
-MINING_LASER_CYCLE_TIME = 2.5      # Total cycle time in seconds
-MINING_LASER_ACTIVE_DURATION = 2.0  # How long laser beam stays visible
+MINING_LASER_CYCLE_TIME = 4.0      # Total cycle time in seconds
+MINING_LASER_ACTIVE_DURATION = 3.5  # How long laser beam stays visible
 MINING_RANGE = 200                   # Maximum mining distance in pixels
 ORE_PER_CYCLE = 2                   # Amount of ore mined per activation
 
+# Audio effect constants
+LASER_SOUND = arcade.Sound("assets/audio/laser-beam.wav")
+LASER_SOUND_VOLUME = 0.5  # Volume level (0.0 to 1.0)
+FADE_OUT_DURATION = 0.5  # Duration of fade out in seconds
 
 class MiningLaserModule(BaseModule):
     """Mining laser module that extracts ore from nearby asteroids"""
@@ -37,16 +42,21 @@ class MiningLaserModule(BaseModule):
         self.current_target = None  # Currently targeted asteroid for visual effects
         self.active_duration = MINING_LASER_ACTIVE_DURATION
         self.active_timer = 0.0     # Timer for active state
+        
+        # Audio
+        self.laser_sound_playback = None
+        self.fade_out_timer = 0.0
+        self.is_fading_out = False
     
-    def _execute_module_effect(self, ship_entity):
+    def on_module_effect_start(self, ship_entity):
         """
-        Execute mining laser effect - mine ore from nearby asteroids
+        Called when the module effect starts - find and target asteroid
         
         Args:
             ship_entity: The ship this module is equipped to
             
         Returns:
-            bool: True if mining was successful
+            bool: True if targeting was successful
         """
         # Reset active timer when starting new activation
         self.active_timer = 0.0
@@ -63,19 +73,29 @@ class MiningLaserModule(BaseModule):
         
         # Store target for visual effects and register laser beam
         self.current_target = target_asteroid
+        return True
+    
+    def on_module_effect_end(self, ship_entity):
+        """
+        Called when the module effect ends - mine the targeted asteroid
         
+        Args:
+            ship_entity: The ship this module is equipped to
+            
+        Returns:
+            bool: True if mining was successful
+        """
+        if self.current_target is None:
+            return False
+            
         # Mine ore from the target asteroid
-        mined_amount = target_asteroid.mine_ore(self.ore_per_cycle)
+        mined_amount = self.current_target.mine_ore(self.ore_per_cycle)
         
         if mined_amount > 0:
             # Successful mining
             self.last_mined_amount = mined_amount
-            self.last_mined_ore_type = target_asteroid.ore_type
+            self.last_mined_ore_type = self.current_target.ore_type
             self.total_ore_mined += mined_amount
-            
-            # You could add the ore to the ship's inventory here
-            # For now, we'll just track statistics
-            
             return True
         else:
             # No ore was mined (asteroid was already depleted)
@@ -111,14 +131,37 @@ class MiningLaserModule(BaseModule):
         """Override to clear visual target when laser stops firing"""
         super()._start_cooldown()
         self.current_target = None
+        self._start_fade_out()
     
+    def _play_laser_sound(self):
+        """Play the laser beam sound effect in a loop"""
+        if not self.laser_sound_playback:
+            self.laser_sound_playback = arcade.play_sound(LASER_SOUND, volume=LASER_SOUND_VOLUME, loop=True)
+            self.is_fading_out = False
+            self.fade_out_timer = 0.0
+
+    def _start_fade_out(self):
+        """Start fading out the laser sound"""
+        if self.laser_sound_playback and not self.is_fading_out:
+            self.is_fading_out = True
+            self.fade_out_timer = 0.0
+
+    def _stop_laser_sound(self):
+        """Stop the laser beam sound effect"""
+        if self.laser_sound_playback:
+            arcade.stop_sound(self.laser_sound_playback)
+            self.laser_sound_playback = None
+            self.is_fading_out = False
+            self.fade_out_timer = 0.0
+
     def _update_active_state(self, delta_time):
         """Update module while in active state - keep laser visible briefly"""
         self.active_timer += delta_time
         
-        # After active duration, start cooldown
+        # After active duration, execute end effect and start cooldown
         if self.active_timer >= self.active_duration:
             self.active_timer = 0.0
+            self.on_module_effect_end(None)  # We don't need the ship entity for mining
             self._start_cooldown()
     
     def activate(self, ship_entity):
@@ -137,10 +180,12 @@ class MiningLaserModule(BaseModule):
         self.state = "active"
         self.last_activation_time = time.time()
         
-        # Execute the module's effect
-        success = self._execute_module_effect(ship_entity)
+        # Start the module effect
+        success = self.on_module_effect_start(ship_entity)
         
         if success:
+            # Start playing the laser sound
+            self._play_laser_sound()
             # Don't immediately start cooldown - let _update_active_state handle it
             # This allows the visual effect to be visible
             return True
@@ -148,3 +193,18 @@ class MiningLaserModule(BaseModule):
             # Reset state if execution failed
             self.state = "ready"
             return False 
+
+    def update(self, delta_time):
+        """Update module state including sound effects"""
+        super().update(delta_time)
+        
+        # Handle sound fade out
+        if self.is_fading_out and self.laser_sound_playback:
+            self.fade_out_timer += delta_time
+            if self.fade_out_timer >= FADE_OUT_DURATION:
+                self._stop_laser_sound()
+            else:
+                # Calculate new volume based on fade progress
+                fade_progress = self.fade_out_timer / FADE_OUT_DURATION
+                new_volume = LASER_SOUND_VOLUME * (1.0 - fade_progress)
+                self.laser_sound_playback.volume = new_volume 
