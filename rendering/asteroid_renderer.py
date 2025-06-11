@@ -5,15 +5,26 @@ Asteroid Renderer - handles rendering of asteroid entities
 import arcade
 from rendering.base_renderer import BaseRenderer
 from core.constants import *
+from game_state.inventory_types import INVENTORY_ICONS
 
+# Mined item effect constants
+ITEM_POPUP_LIFETIME = 60  # Frames
+ITEM_POPUP_SPEED = 2
+ITEM_POPUP_SIZE = 32  # Size of the item icon
+ITEM_POPUP_FADE_START = 45  # When to start fading out
 
 class AsteroidRenderer(BaseRenderer):
     """Handles rendering of asteroid entities with different textures"""
     
-    def __init__(self):
+    def __init__(self, asteroid_entity):
         """Initialize the asteroid renderer and load all asteroid textures"""
         self.asteroid_textures = {}
         self._load_textures()
+        self.active_effects = []
+        self.item_textures = {}  # Cache for loaded item textures
+        
+        # Connect to asteroid's inventory signals
+        print(f"Created renderer for asteroid at ({asteroid_entity.x}, {asteroid_entity.y})")
     
     def _load_textures(self):
         """Load all asteroid textures"""
@@ -29,11 +40,11 @@ class AsteroidRenderer(BaseRenderer):
     def render(self, entity):
         """Render the asteroid entity directly (no coordinate transform needed)"""
         self._draw_asteroid_texture(entity)
-    
+
     def render_local(self, entity, transform):
         """Render the asteroid entity - using world coordinates for simplicity"""
         self._draw_asteroid_texture(entity)
-    
+
     def _draw_asteroid_texture(self, entity):
         """Draw the asteroid texture at the entity's world position"""
         # Get the appropriate texture for this asteroid
@@ -78,4 +89,4 @@ class AsteroidRenderer(BaseRenderer):
             str(entity.ore_remaining),
             entity.x - 5, entity.y - 5,
             WHITE, 12
-        ) 
+        )

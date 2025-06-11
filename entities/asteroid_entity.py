@@ -3,7 +3,15 @@ Asteroid Entity - handles stationary asteroids with ore resources
 """
 
 import random
+
+import arcade
+
 from entities.base_entity import BaseEntity
+from game_state.inventory import Inventory
+from game_state.inventory_types import InventoryType
+from game_state.game_events import on_asteroid_mined
+
+DEPLETED_SOUND = arcade.Sound("assets/audio/mining-blast.wav")
 
 # Asteroid Constants - Easy to tune
 ASTEROID_TYPES_COUNT = 6           # Number of different asteroid textures (1-6)
@@ -24,7 +32,14 @@ ASTEROID_BASE_RADII = {
     6: 20   # asteroid6.png
 }
 
-ORE_TYPES = ['iron', 'copper', 'gold', 'platinum']
+# Available ore types for asteroids
+ASTEROID_ORE_TYPES = [
+    InventoryType.VELDSPAR,
+    InventoryType.SCORDITE,
+    InventoryType.PYROXERES,
+    InventoryType.PLAGIOCLASE,
+    InventoryType.OMBER
+]
 
 
 class AsteroidEntity(BaseEntity):
@@ -45,9 +60,13 @@ class AsteroidEntity(BaseEntity):
         direction = random.choice([-1, 1])  # Either clockwise (-) or counter-clockwise (+)
         self.rotation_speed = speed * direction
         
-        # Ore properties
-        self.ore_type = random.choice(ORE_TYPES)
-        self.ore_remaining = random.randint(ASTEROID_MIN_ORE, ASTEROID_MAX_ORE)  # How much ore this asteroid contains
+        # Initialize ore
+        self.ore_type = random.choice(ASTEROID_ORE_TYPES)
+        initial_ore = random.randint(ASTEROID_MIN_ORE, ASTEROID_MAX_ORE)
+        
+        # Create inventory with initial ore
+        self.inventory = Inventory(max_units=initial_ore)
+        self.inventory.add_item(self.ore_type, initial_ore)
         
     def update(self, delta_time, input_commands=None):
         """Update asteroid logic (rotation and depletion check)"""
@@ -59,22 +78,23 @@ class AsteroidEntity(BaseEntity):
         self.rotation = self.rotation % 360  # Keep rotation between 0-360
         
         # Check if asteroid is depleted
-        if self.ore_remaining <= 0:
+        if self.is_depleted():
             self.destroy()
             
-    def mine_ore(self, amount=1):
-        """Mine ore from this asteroid, returns the amount actually mined"""
-        if not self.active or self.ore_remaining <= 0:
-            return 0
+    def mine_ore(self, amount):
+        """Mine ore from the asteroid"""
+        if not self.inventory:
+            return False
+
+        success = self.inventory.remove_item(self.ore_type, amount)
+        if success:
+            # Emit the asteroid mined signal
+            on_asteroid_mined.send(self, amount=amount)
+
+        if self.is_depleted():
+            DEPLETED_SOUND.play()
             
-        actual_mined = min(amount, self.ore_remaining)
-        self.ore_remaining -= actual_mined
-        
-        # Destroy asteroid if depleted
-        if self.ore_remaining <= 0:
-            self.destroy()
-            
-        return actual_mined
+        return success
         
     def get_collision_radius(self):
         """Get the collision radius based on asteroid type and scale"""
@@ -84,4 +104,8 @@ class AsteroidEntity(BaseEntity):
         
     def is_depleted(self):
         """Check if the asteroid has no ore remaining"""
-        return self.ore_remaining <= 0 
+        return self.inventory.get_item_quantity(self.ore_type) <= 0
+
+    def on_items_removed(self, item_type, amount):
+        print(f"Asteroid at ({self.x}, {self.y}) emitted on_items_removed signal for {item_type}")
+        # Additional logic can be added here if needed 

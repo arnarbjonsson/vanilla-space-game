@@ -6,6 +6,7 @@ import arcade
 import random
 import math
 from core.constants import *
+from game_state.inventory_types import INVENTORY_ICONS
 
 # Laser beam visual effect constants
 LASER_BEAM_COLOR = (255, 140, 0)  # Bright orange RGB
@@ -21,9 +22,65 @@ PARTICLE_COLOR = (255, 200, 100)  # Light orange
 PARTICLE_SIZE = 2
 PARTICLE_SPEED = 2
 PARTICLE_LIFETIME = 30  # Frames
-PARTICLE_ATTRACTION_FORCE = 0.4  # How strongly particles are attracted to the beam
+PARTICLE_ATTRACTION_FORCE = 0.8  # How strongly particles are attracted to the beam
 PARTICLE_INITIAL_OFFSET = 6  # How far particles start from the beam
 PARTICLE_RANDOM_FORCE = 0.1  # Random movement factor
+
+# Mined item effect constants
+ITEM_POPUP_LIFETIME = 60  # Frames
+ITEM_POPUP_SPEED = 2
+ITEM_POPUP_SIZE = 32  # Size of the item icon
+ITEM_POPUP_FADE_START = 45  # When to start fading out
+
+class MinedItemEffect:
+    """Handles rendering of mined item popup effects"""
+    
+    def __init__(self):
+        """Initialize the mined item effect renderer"""
+        self.active_effects = []
+        self.textures = {}  # Cache for loaded textures
+        
+    def add_effect(self, item_type, x, y):
+        """Add a new mined item effect"""
+        # Load texture if not already cached
+        if item_type not in self.textures:
+            texture_path = INVENTORY_ICONS[item_type]
+            self.textures[item_type] = arcade.load_texture(texture_path)
+            
+        self.active_effects.append({
+            'item_type': item_type,
+            'x': x,
+            'y': y,
+            'lifetime': ITEM_POPUP_LIFETIME,
+            'texture': self.textures[item_type]
+        })
+    
+    def update(self):
+        """Update effect states"""
+        for effect in self.active_effects[:]:
+            effect['lifetime'] -= 1
+            effect['y'] += ITEM_POPUP_SPEED  # Move upward
+            
+            if effect['lifetime'] <= 0:
+                self.active_effects.remove(effect)
+    
+    def render(self):
+        """Render all active mined item effects"""
+        for effect in self.active_effects:
+            # Calculate alpha based on lifetime
+            alpha = 255
+            if effect['lifetime'] < ITEM_POPUP_FADE_START:
+                alpha = int((effect['lifetime'] / ITEM_POPUP_FADE_START) * 255)
+            
+            # Draw the item icon
+            arcade.draw_tewxture_rectangle(
+                effect['x'],
+                effect['y'],
+                ITEM_POPUP_SIZE,
+                ITEM_POPUP_SIZE,
+                effect['texture'],
+                alpha=alpha
+            )
 
 class MiningLaserRenderer:
     """Handles rendering of mining laser effects"""
@@ -174,6 +231,7 @@ class EffectsRenderer:
     def __init__(self):
         """Initialize the effects renderer"""
         self.mining_laser_renderer = MiningLaserRenderer()
+        self.mined_item_effect = MinedItemEffect()
     
     def render_effects(self, game_state):
         """Render all active effects in the game based on game state"""
@@ -182,4 +240,12 @@ class EffectsRenderer:
         
         # Update and render mining laser effects
         self.mining_laser_renderer.update()
-        self.mining_laser_renderer.render(game_state.player_entity) 
+        self.mining_laser_renderer.render(game_state.player_entity)
+        
+        # Update and render mined item effects
+        self.mined_item_effect.update()
+        self.mined_item_effect.render()
+        
+    def add_mined_item_effect(self, item_type, x, y):
+        """Add a new mined item effect at the specified position"""
+        self.mined_item_effect.add_effect(item_type, x, y) 

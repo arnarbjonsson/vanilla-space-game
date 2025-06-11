@@ -6,6 +6,7 @@ import math
 from entities.base_entity import BaseEntity
 from input.commands import InputCommand
 from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
+from game_state.inventory import Inventory
 
 # Player Ship Constants - Easy to tune
 PLAYER_ROTATION_SPEED = 100     # degrees per second
@@ -14,6 +15,7 @@ PLAYER_MAX_VELOCITY = 80       # pixels per second
 PLAYER_DRAG = 0.2              # drag coefficient (higher = more drag)
 PLAYER_MAX_HEALTH = 100        # maximum health points
 PLAYER_MAX_MODULES = 4         # maximum number of modules that can be equipped
+PLAYER_INVENTORY_SIZE = 100    # maximum number of units the player can carry
 
 # Module locator positions (relative to ship center)
 MODULE_LOCATORS = [
@@ -43,6 +45,9 @@ class PlayerEntity(BaseEntity):
         # Module system
         self.modules = []  # List of equipped modules
         self.max_modules = PLAYER_MAX_MODULES  # Maximum number of modules that can be equipped
+        
+        # Inventory system
+        self.inventory = Inventory(max_units=PLAYER_INVENTORY_SIZE)
         
         # Game state reference (for modules to access other entities)
         self.game_state = None
@@ -291,3 +296,21 @@ class PlayerEntity(BaseEntity):
         
         # Add to ship position
         return (self.x + rotated_x, self.y + rotated_y) 
+
+    def _equip_modules(self):
+        """Equip default modules to the ship"""
+        # Create and equip mining laser module
+        mining_module = MiningLaserModule()
+        self.equip_module(mining_module)
+        
+        # Connect to mining module signals
+        mining_module.on_ore_mined.connect(self._on_ore_mined)
+        
+    def _on_ore_mined(self, module, ore_type, amount):
+        """Handle ore being mined by adding it to player's inventory"""
+        print(f"Player received mined ore: {amount} units of {ore_type}.")
+        if self.inventory:
+            self.inventory.add_item(ore_type, amount)
+            print(f"Added {amount} units of {ore_type} to player inventory.")
+        else:
+            print("Player inventory not available.") 

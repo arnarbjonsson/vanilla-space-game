@@ -11,6 +11,7 @@ from rendering.asteroid_renderer import AsteroidRenderer
 from rendering.background_renderer import BackgroundRenderer
 from rendering.effects_renderer import EffectsRenderer
 from ui.ui_renderer import UIRenderer
+from rendering.mined_item_effect_manager import MinedItemEffectManager
 
 
 class Renderer:
@@ -20,9 +21,10 @@ class Renderer:
         """Initialize the renderer with entity-specific renderers"""
         self.background_renderer = BackgroundRenderer()
         self.player_renderer = PlayerRenderer()
-        self.asteroid_renderer = AsteroidRenderer()
+        self.asteroid_renderers = {}  # Map of asteroid entities to their renderers
         self.effects_renderer = EffectsRenderer()
         self.ui_renderer = UIRenderer()
+        self.mined_item_effect_manager = MinedItemEffectManager()
         
     def initialize(self):
         """Initialize renderer resources"""
@@ -42,6 +44,8 @@ class Renderer:
         
         # Finally render UI on top
         self.ui_renderer.render(game_state)
+        
+        self.mined_item_effect_manager.render()
             
     def handle_mouse_click(self, x, y, game_state):
         """
@@ -55,43 +59,18 @@ class Renderer:
             bool: True if the click was handled by UI
         """
         return self.ui_renderer.handle_mouse_click(x, y, game_state)
-            
+
     def _render_entities(self, entities):
         """Render all entities using their specific renderers"""
         for entity in entities:
             if isinstance(entity, PlayerEntity):
                 self.player_renderer.render(entity)
             elif isinstance(entity, AsteroidEntity):
-                self.asteroid_renderer.render(entity)
-            # Add other entity types here as needed
-        
-    def _render_thrust_flames(self, player):
-        """Render thrust flames for the player ship"""
-        if not player or not player.is_thrusting:
-            return
-            
-        # Draw simple thrust flame
-        # Calculate flame position behind the ship
-        import math
-        
-        # Get ship's rear position (opposite to thrust direction) 
-        angle_rad = math.radians(player.angle)
-        
-        # Distance from ship center to rear edge
-        rear_distance = 20
-        
-        # Rear position (opposite of thrust direction)
-        rear_x = player.center_x - math.cos(angle_rad) * rear_distance
-        rear_y = player.center_y - math.sin(angle_rad) * rear_distance
-        
-        # Flame length and width
-        flame_length = 45  # Tripled from 15
-        flame_width = 9    # Tripled from 3
-        
-        # Calculate flame end position
-        flame_end_x = rear_x - math.cos(angle_rad) * flame_length
-        flame_end_y = rear_y - math.sin(angle_rad) * flame_length
-        
-        # Draw flame as a thick line from ship rear to flame end
-        arcade.draw_line(rear_x, rear_y, flame_end_x, flame_end_y, 
-                        arcade.color.ORANGE, flame_width)
+                # Get or create renderer for this asteroid
+                if entity not in self.asteroid_renderers:
+                    renderer = AsteroidRenderer(entity)
+                    self.asteroid_renderers[entity] = renderer
+                self.asteroid_renderers[entity].render(entity)
+
+    def update(self, game_state):
+        self.mined_item_effect_manager.update()

@@ -47,6 +47,7 @@ class StateManager:
         player_x = SCREEN_WIDTH // 2
         player_y = 100
         min_distance_from_player = 200  # Minimum distance from player
+        min_distance_between_asteroids = 150  # Minimum distance between asteroids
         
         for i in range(12):  # Create 12 test asteroids
             # Keep trying until we find a good position
@@ -57,8 +58,19 @@ class StateManager:
                 
                 # Check distance from player
                 distance = ((x - player_x) ** 2 + (y - player_y) ** 2) ** 0.5
+                if distance < min_distance_from_player:
+                    attempts += 1
+                    continue
                 
-                if distance >= min_distance_from_player:
+                # Check distance from other asteroids
+                too_close = False
+                for asteroid in self.current_state.get_asteroids():
+                    asteroid_distance = ((x - asteroid.x) ** 2 + (y - asteroid.y) ** 2) ** 0.5
+                    if asteroid_distance < min_distance_between_asteroids:
+                        too_close = True
+                        break
+                
+                if not too_close:
                     break  # Found a good position
                     
                 attempts += 1
