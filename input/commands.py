@@ -17,6 +17,12 @@ class InputCommand(Enum):
     SHOOT = "shoot"
     PAUSE = "pause"
     
+    # Module commands
+    ACTIVATE_MODULE_1 = "activate_module_1"
+    ACTIVATE_MODULE_2 = "activate_module_2"
+    ACTIVATE_MODULE_3 = "activate_module_3"
+    ACTIVATE_MODULE_4 = "activate_module_4"
+    
     # Menu commands (for future use)
     CONFIRM = "confirm"
     CANCEL = "cancel" 

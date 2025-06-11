@@ -36,6 +36,19 @@ class Renderer:
         self._render_entities(game_state.entities)
         self.ui_renderer.render(game_state)
             
+    def handle_mouse_click(self, x, y, game_state):
+        """
+        Handle mouse click events
+        
+        Args:
+            x, y: Mouse click position
+            game_state: Current game state
+            
+        Returns:
+            bool: True if the click was handled by UI
+        """
+        return self.ui_renderer.handle_mouse_click(x, y, game_state)
+            
     def _render_entities(self, entities):
         """Render all entities using their specific renderers"""
         for entity in entities:

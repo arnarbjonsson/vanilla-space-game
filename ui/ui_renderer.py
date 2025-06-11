@@ -4,6 +4,7 @@ UI Renderer - handles all user interface rendering
 
 import arcade
 from core.constants import *
+from ui.module_ui import ModuleUI
 
 
 class UIRenderer:
@@ -11,16 +12,36 @@ class UIRenderer:
     
     def __init__(self):
         """Initialize the UI renderer"""
-        pass
+        self.module_ui = ModuleUI()
         
     def render(self, game_state):
         """Render all UI elements"""
         self._render_hud(game_state)
         self._render_controls_hint()
         
+        # Update and render module UI
+        self.module_ui.update(game_state.player_entity)
+        self.module_ui.render()
+        
         # Render pause overlay if game is paused
         if not game_state.is_game_running:
             self._render_pause_overlay()
+    
+    def handle_mouse_click(self, x, y, game_state):
+        """
+        Handle mouse click events for UI elements
+        
+        Args:
+            x, y: Mouse click position
+            game_state: Current game state
+            
+        Returns:
+            bool: True if UI handled the click
+        """
+        # Check if module UI handled the click
+        if game_state.player_entity:
+            return self.module_ui.handle_mouse_click(x, y, game_state.player_entity)
+        return False
             
     def _render_hud(self, game_state):
         """Render heads-up display elements"""
@@ -73,7 +94,7 @@ class UIRenderer:
     def _render_controls_hint(self):
         """Render controls information"""
         arcade.draw_text(
-            "Controls: A/D to rotate, W to thrust, Space to shoot, Esc to pause",
+            "Controls: A/D to rotate, W to thrust, 1-4 for modules, Esc to pause",
             10, 20,
             WHITE,
             font_size=12

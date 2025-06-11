@@ -29,6 +29,11 @@ class GameState:
     def get_entities_by_type(self, entity_class):
         """Get all entities of a specific type using isinstance"""
         return [entity for entity in self.entities if isinstance(entity, entity_class)]
+    
+    def get_asteroids(self):
+        """Get all asteroid entities"""
+        from entities.asteroid_entity import AsteroidEntity
+        return self.get_entities_by_type(AsteroidEntity)
         
     def cleanup_inactive_entities(self):
         """Remove inactive entities from the game state"""

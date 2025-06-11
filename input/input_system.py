@@ -50,6 +50,16 @@ class InputSystem:
             self.commands_this_frame.append(InputCommand.SHOOT)
         elif key == arcade.key.ESCAPE:
             self.commands_this_frame.append(InputCommand.PAUSE)
+        
+        # Handle module activation commands
+        elif key == arcade.key.KEY_1:
+            self.commands_this_frame.append(InputCommand.ACTIVATE_MODULE_1)
+        elif key == arcade.key.KEY_2:
+            self.commands_this_frame.append(InputCommand.ACTIVATE_MODULE_2)
+        elif key == arcade.key.KEY_3:
+            self.commands_this_frame.append(InputCommand.ACTIVATE_MODULE_3)
+        elif key == arcade.key.KEY_4:
+            self.commands_this_frame.append(InputCommand.ACTIVATE_MODULE_4)
             
     def on_key_release(self, key, modifiers):
         """Handle key release events"""

@@ -56,4 +56,16 @@ class GameLoop(arcade.View):
         
     def on_key_release(self, key, modifiers):
         """Handle key release events"""
-        self.input_system.on_key_release(key, modifiers) 
+        self.input_system.on_key_release(key, modifiers)
+    
+    def on_mouse_press(self, x, y, button, modifiers):
+        """Handle mouse press events"""
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            # Let the renderer's UI system handle the click
+            current_state = self.state_manager.get_current_state()
+            ui_handled = self.renderer.handle_mouse_click(x, y, current_state)
+            
+            # If UI didn't handle it, could add other mouse handling here
+            if not ui_handled:
+                # Could handle world clicks, shooting, etc.
+                pass 

@@ -31,6 +31,13 @@ class PlayerEntity(BaseEntity):
         self.health = 100
         self.max_health = 100
         
+        # Module system
+        self.modules = []  # List of equipped modules
+        self.max_modules = 4  # Maximum number of modules that can be equipped
+        
+        # Game state reference (for modules to access other entities)
+        self.game_state = None
+        
     def update(self, delta_time, input_commands=None):
         """Update player logic based on input and physics"""
         if not self.active:
@@ -39,6 +46,7 @@ class PlayerEntity(BaseEntity):
         self._process_input(input_commands or [], delta_time)
         self._update_physics(delta_time)
         self._handle_screen_bounds()
+        self._update_modules(delta_time)
         
     def _process_input(self, commands, delta_time):
         """Process input commands for player control"""
@@ -125,34 +133,125 @@ class PlayerEntity(BaseEntity):
     def is_active(self):
         """Check if entity is active"""
         return self.active
+
+    def _update_modules(self, delta_time):
+        """Update all equipped modules"""
+        for module in self.modules:
+            if module.active:
+                module.update(delta_time)
+
+    # Module management methods
+    def equip_module(self, module):
+        """
+        Equip a module to the ship
         
-    # Properties for compatibility with old coordinate system
-    @property
-    def x(self):
-        """Get x position for compatibility"""
-        return self.center_x
+        Args:
+            module: BaseModule instance to equip
+            
+        Returns:
+            bool: True if module was successfully equipped
+        """
+        if len(self.modules) >= self.max_modules:
+            return False  # Ship is full
+            
+        if module in self.modules:
+            return False  # Module already equipped
+            
+        self.modules.append(module)
+        module.equip_to_ship(self)
+        return True
+    
+    def unequip_module(self, module):
+        """
+        Unequip a module from the ship
         
-    @x.setter
-    def x(self, value):
-        """Set x position for compatibility"""
-        self.center_x = value
+        Args:
+            module: BaseModule instance to unequip
+            
+        Returns:
+            bool: True if module was successfully unequipped
+        """
+        if module not in self.modules:
+            return False
+            
+        self.modules.remove(module)
+        module.unequip_from_ship(self)
+        return True
+    
+    def activate_module(self, module_index):
+        """
+        Activate a module by its index in the modules list
         
-    @property
-    def y(self):
-        """Get y position for compatibility"""
-        return self.center_y
+        Args:
+            module_index: Index of the module to activate (0-based)
+            
+        Returns:
+            bool: True if module was successfully activated
+        """
+        if module_index < 0 or module_index >= len(self.modules):
+            return False
+            
+        module = self.modules[module_index]
+        return module.activate(self)
+    
+    def get_module_by_index(self, index):
+        """Get a module by its index, or None if invalid index"""
+        if 0 <= index < len(self.modules):
+            return self.modules[index]
+        return None
+    
+    def get_equipped_modules(self):
+        """Get list of all equipped modules"""
+        return self.modules.copy()
+    
+    def has_module_slot_available(self):
+        """Check if there's an available slot for a new module"""
+        return len(self.modules) < self.max_modules
+    
+    # Target selection methods for modules
+    def find_closest_asteroid(self, max_range=None):
+        """
+        Find the closest asteroid within range
         
-    @y.setter
-    def y(self, value):
-        """Set y position for compatibility"""
-        self.center_y = value
+        Args:
+            max_range: Maximum distance to search (None for unlimited)
+            
+        Returns:
+            AsteroidEntity or None: Closest asteroid or None if none in range
+        """
+        if not self.game_state:
+            return None
         
-    @property
-    def rotation(self):
-        """Get rotation for compatibility"""
-        return self.angle
+        asteroids = self.game_state.get_asteroids()
+        closest_asteroid = None
+        closest_distance = float('inf')
         
-    @rotation.setter
-    def rotation(self, value):
-        """Set rotation for compatibility"""
-        self.angle = value 
+        for asteroid in asteroids:
+            if not asteroid.active or asteroid.is_depleted():
+                continue
+                
+            # Calculate distance between ship and asteroid
+            distance = self._calculate_distance_to(asteroid)
+            
+            # Check if asteroid is within range (if specified)
+            if max_range is not None:
+                # Account for asteroid collision radius
+                effective_distance = distance - asteroid.get_collision_radius()
+                if effective_distance > max_range:
+                    continue
+            
+            if distance < closest_distance:
+                closest_distance = distance
+                closest_asteroid = asteroid
+        
+        return closest_asteroid
+    
+    def _calculate_distance_to(self, entity):
+        """Calculate distance between this player and another entity"""
+        dx = self.x - entity.x
+        dy = self.y - entity.y
+        return math.sqrt(dx * dx + dy * dy)
+
+    def set_game_state(self, game_state):
+        """Set reference to the game state for module access"""
+        self.game_state = game_state 

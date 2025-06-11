@@ -6,6 +6,7 @@ import random
 from game_state.game_state import GameState
 from entities.player_entity import PlayerEntity
 from entities.asteroid_entity import AsteroidEntity
+from entities.mining_laser_module import MiningLaserModule
 from input.commands import InputCommand
 from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
 
@@ -25,8 +26,13 @@ class StateManager:
         """Set up the initial game state"""
         # Create and add player entity at center bottom of larger screen
         player = PlayerEntity(SCREEN_WIDTH // 2, 100)  # Increased from 50 to 100 for better positioning
+        player.set_game_state(self.current_state)  # Give player access to game state for modules
         self.current_state.player_entity = player
         self.current_state.add_entity(player)
+        
+        # Auto-equip mining laser for testing
+        mining_laser = MiningLaserModule()
+        player.equip_module(mining_laser)
         
         # Create some test asteroids
         self._spawn_initial_asteroids()
@@ -75,6 +81,9 @@ class StateManager:
                 self._handle_shoot_command()
             elif command == InputCommand.PAUSE:
                 self.current_state.is_game_running = not self.current_state.is_game_running
+            elif command in [InputCommand.ACTIVATE_MODULE_1, InputCommand.ACTIVATE_MODULE_2, 
+                           InputCommand.ACTIVATE_MODULE_3, InputCommand.ACTIVATE_MODULE_4]:
+                self._handle_module_activation_command(command)
                 
         # Pass movement commands to player entity
         if self.current_state.player_entity:
@@ -96,6 +105,26 @@ class StateManager:
         """Handle shooting action"""
         # For now, just increment score as a placeholder
         self.current_state.score += 1
+        
+    def _handle_module_activation_command(self, command):
+        """Handle module activation commands"""
+        if not self.current_state.player_entity:
+            return
+        
+        # Map commands to module indices
+        module_index_map = {
+            InputCommand.ACTIVATE_MODULE_1: 0,
+            InputCommand.ACTIVATE_MODULE_2: 1,
+            InputCommand.ACTIVATE_MODULE_3: 2,
+            InputCommand.ACTIVATE_MODULE_4: 3
+        }
+        
+        module_index = module_index_map.get(command)
+        if module_index is not None:
+            success = self.current_state.player_entity.activate_module(module_index)
+            if success:
+                # Could add feedback here (sound, visual effect, etc.)
+                pass
         
     def _update_game_logic(self, delta_time):
         """Update game logic that doesn't depend on input"""
