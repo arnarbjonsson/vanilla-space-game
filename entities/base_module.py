@@ -37,6 +37,7 @@ class BaseModule(ABC):
         # Module properties
         self.active = True
         self.equipped = False  # Whether module is equipped to a ship
+        self.module_index = -1  # Index in ship's module list
         
     def update(self, delta_time):
         """Update module state and cooldown timer"""
@@ -106,14 +107,26 @@ class BaseModule(ABC):
         else:
             return 0.0
     
+    def get_module_index(self):
+        """
+        Get the index of this module in its ship's module list
+        
+        Returns:
+            int: Module index, or -1 if not equipped
+        """
+        return self.module_index if self.equipped else -1
+    
     def equip_to_ship(self, ship_entity):
         """Equip this module to a ship"""
         self.equipped = True
+        # Find our index in the ship's module list
+        self.module_index = ship_entity.modules.index(self)
         self._on_equipped(ship_entity)
     
     def unequip_from_ship(self, ship_entity):
         """Unequip this module from a ship"""
         self.equipped = False
+        self.module_index = -1
         self._on_unequipped(ship_entity)
     
     def destroy(self):

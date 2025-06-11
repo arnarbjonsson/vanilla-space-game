@@ -15,6 +15,13 @@ PLAYER_DRAG = 0.2              # drag coefficient (higher = more drag)
 PLAYER_MAX_HEALTH = 100        # maximum health points
 PLAYER_MAX_MODULES = 4         # maximum number of modules that can be equipped
 
+# Module locator positions (relative to ship center)
+MODULE_LOCATORS = [
+    (-10, -40),   # Left side
+    (-10, 40),    # Right side
+    (30, -15),   # Bottom
+    (30, 15),    # Top
+]
 
 class PlayerEntity(BaseEntity):
     """Player spaceship entity with rotation and thrust physics"""
@@ -258,3 +265,29 @@ class PlayerEntity(BaseEntity):
     def set_game_state(self, game_state):
         """Set reference to the game state for module access"""
         self.game_state = game_state 
+
+    def get_module_position(self, module_index):
+        """
+        Get the world position of a module's locator
+        
+        Args:
+            module_index: Index of the module (0-based)
+            
+        Returns:
+            tuple: (x, y) world coordinates of the module locator
+        """
+        if module_index < 0 or module_index >= len(MODULE_LOCATORS):
+            return (self.x, self.y)  # Default to ship center if invalid index
+            
+        # Get the locator offset
+        locator_x, locator_y = MODULE_LOCATORS[module_index]
+        
+        # Convert rotation to radians
+        angle_rad = math.radians(self.rotation)
+        
+        # Rotate the locator offset
+        rotated_x = locator_x * math.cos(angle_rad) - locator_y * math.sin(angle_rad)
+        rotated_y = locator_x * math.sin(angle_rad) + locator_y * math.cos(angle_rad)
+        
+        # Add to ship position
+        return (self.x + rotated_x, self.y + rotated_y) 

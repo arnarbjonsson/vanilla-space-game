@@ -7,8 +7,8 @@ from entities.base_entity import BaseEntity
 
 # Asteroid Constants - Easy to tune
 ASTEROID_TYPES_COUNT = 6           # Number of different asteroid textures (1-6)
-ASTEROID_MIN_SCALE = 0.15         # Minimum size scale factor
-ASTEROID_MAX_SCALE = 0.45         # Maximum size scale factor
+ASTEROID_MIN_SCALE = 0.3         # Minimum size scale factor
+ASTEROID_MAX_SCALE = 0.6         # Maximum size scale factor
 ASTEROID_MIN_ROTATION_SPEED = 3   # Minimum rotation speed (degrees/second)
 ASTEROID_MAX_ROTATION_SPEED = 5   # Maximum rotation speed (degrees/second)
 ASTEROID_MIN_ORE = 3              # Minimum ore amount per asteroid

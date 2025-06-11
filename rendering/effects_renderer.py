@@ -45,12 +45,14 @@ class MiningLaserRenderer:
         from entities.mining_laser_module import MiningLaserModule
         
         # Find active mining laser modules and render their effects
-        for module in player_entity.modules:
+        for i, module in enumerate(player_entity.modules):
             if (isinstance(module, MiningLaserModule) and 
                 module.state == "active" and 
                 module.current_target is not None):
-                self._draw_laser_beam(player_entity, module.current_target)
-                self._generate_particles(player_entity, module.current_target)
+                # Get module position from the ship
+                module_x, module_y = player_entity.get_module_position(i)
+                self._draw_laser_beam(module_x, module_y, module.current_target)
+                self._generate_particles(module_x, module_y, module.current_target)
     
     def _update_particles(self):
         """Update and remove expired particles"""
@@ -86,11 +88,11 @@ class MiningLaserRenderer:
             particle['x'] += particle['dx']
             particle['y'] += particle['dy']
     
-    def _generate_particles(self, source_entity, target_entity):
+    def _generate_particles(self, source_x, source_y, target_entity):
         """Generate particles along the laser beam"""
         # Calculate direction vector from target to source
-        dx = source_entity.x - target_entity.x
-        dy = source_entity.y - target_entity.y
+        dx = source_x - target_entity.x
+        dy = source_y - target_entity.y
         length = math.sqrt(dx * dx + dy * dy)
         
         # Normalize direction
@@ -128,11 +130,11 @@ class MiningLaserRenderer:
                 'beam_dy': dy
             })
     
-    def _draw_laser_beam(self, source_entity, target_entity):
-        """Draw a laser beam between two entities"""
+    def _draw_laser_beam(self, source_x, source_y, target_entity):
+        """Draw a laser beam between two points"""
         # Draw the outer glow effect
         arcade.draw_line(
-            source_entity.x, source_entity.y,
+            source_x, source_y,
             target_entity.x, target_entity.y,
             LASER_GLOW_COLOR,
             LASER_BEAM_THICKNESS + LASER_GLOW_THICKNESS_OFFSET
@@ -140,7 +142,7 @@ class MiningLaserRenderer:
         
         # Draw the main beam
         arcade.draw_line(
-            source_entity.x, source_entity.y,
+            source_x, source_y,
             target_entity.x, target_entity.y,
             LASER_BEAM_COLOR,
             LASER_BEAM_THICKNESS
@@ -148,7 +150,7 @@ class MiningLaserRenderer:
         
         # Draw the white core
         arcade.draw_line(
-            source_entity.x, source_entity.y,
+            source_x, source_y,
             target_entity.x, target_entity.y,
             LASER_CORE_COLOR,
             LASER_CORE_THICKNESS

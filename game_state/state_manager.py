@@ -32,9 +32,9 @@ class StateManager:
         self.current_state.add_entity(player)
         
         # Auto-equip mining laser for testing
-        mining_laser = MiningLaserModule()
-        player.equip_module(mining_laser)
-        
+        player.equip_module(MiningLaserModule())
+        player.equip_module(MiningLaserModule())
+
         # Create some test asteroids
         self._spawn_initial_asteroids()
         
