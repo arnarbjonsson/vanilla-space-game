@@ -112,7 +112,3 @@ class AsteroidEntity(BaseEntity):
     def is_depleted(self):
         """Check if the asteroid has no ore remaining"""
         return self.inventory.get_item_quantity(self.ore_type) <= 0
-
-    def on_items_removed(self, item_type, amount):
-        print(f"Asteroid at ({self.x}, {self.y}) emitted on_items_removed signal for {item_type}")
-        # Additional logic can be added here if needed 

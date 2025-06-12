@@ -117,13 +117,13 @@ class MiningLaserModule(BaseModule):
             bool: True if mining was successful
         """
         if self.current_target is None:
-            print("Mining failed: No target asteroid.")
+            print("Mining failed: No target asteroid")
             return False
             
         # Get the remaining ore amount
         remaining_ore = self.current_target.inventory.get_item_quantity(self.current_target.ore_type)
         if remaining_ore <= 0:
-            print("Mining failed: No ore mined (asteroid depleted).")
+            print("Mining failed: Asteroid is depleted")
             self.last_mined_amount = 0
             self.last_mined_ore_type = None
             self.last_hit_type = HitType.NORMAL
@@ -137,6 +137,7 @@ class MiningLaserModule(BaseModule):
         base_mining_amount = min(self.ore_per_cycle, remaining_ore)
         mining_amount = int(base_mining_amount * multiplier)
             
+        print(f"Attempting to mine {mining_amount} units of {self.current_target.ore_type}")
         # Mine ore from the target asteroid
         success = self.current_target.mine_ore(mining_amount, hit_type)
         
@@ -148,8 +149,8 @@ class MiningLaserModule(BaseModule):
 
             self._play_ore_mined_sound()
             
+            print(f"Mining successful! Emitting signal for {mining_amount} units of {self.current_target.ore_type}")
             # Emit signal with mined ore details
-            print(f"Mining successful: {hit_type.name_display.upper()} hit! Mined {mining_amount} units of {self.current_target.ore_type}.")
             self.on_ore_mined.send(
                 self,
                 ore_type=self.current_target.ore_type,
@@ -273,4 +274,9 @@ class MiningLaserModule(BaseModule):
                 # Calculate new volume based on fade progress
                 fade_progress = self.fade_out_timer / FADE_OUT_DURATION
                 new_volume = LASER_SOUND_VOLUME * (1.0 - fade_progress)
-                self.laser_sound_playback.volume = new_volume 
+                self.laser_sound_playback.volume = new_volume
+
+    def equip_to_ship(self, ship_entity):
+        """Connect the ore_mined signal to the ship's inventory handler"""
+        super().equip_to_ship(ship_entity)
+        self.on_ore_mined.connect(ship_entity._on_ore_mined) 

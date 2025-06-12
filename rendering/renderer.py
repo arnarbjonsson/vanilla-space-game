@@ -6,6 +6,7 @@ import arcade
 from core.constants import *
 from entities.player_entity import PlayerEntity
 from entities.asteroid_entity import AsteroidEntity
+from game_state.game_state import GameState
 from rendering.player_renderer import PlayerRenderer
 from rendering.asteroid_renderer import AsteroidRenderer
 from rendering.background_renderer import BackgroundRenderer
@@ -17,13 +18,13 @@ from rendering.mined_item_effect_manager import MinedItemEffectManager
 class Renderer:
     """Handles all visual rendering of the game using entity renderers"""
     
-    def __init__(self):
+    def __init__(self, game_state: GameState):
         """Initialize the renderer with entity-specific renderers"""
         self.background_renderer = BackgroundRenderer()
         self.player_renderer = PlayerRenderer()
         self.asteroid_renderers = {}  # Map of asteroid entities to their renderers
         self.effects_renderer = EffectsRenderer()
-        self.ui_renderer = UIRenderer()
+        self.ui_renderer = UIRenderer(game_state=game_state)
         self.mined_item_effect_manager = MinedItemEffectManager()
         
     def initialize(self):

@@ -56,19 +56,14 @@ class Inventory:
     
     def remove_item(self, item_type: InventoryType, amount: float) -> bool:
         """Remove items from inventory"""
-        print(f"Attempting to remove {amount} of {item_type} from inventory")
         if item_type not in self.items:
-            print(f"Item {item_type} not found in inventory")
             return False
         
         if self.items[item_type] < amount:
-            print(f"Not enough {item_type} in inventory")
             return False
         
         self.items[item_type] -= amount
-        print(f"Successfully removed {amount} of {item_type} from inventory")
         self.on_items_removed.send(self, item_type=item_type, quantity=amount)
-        print(f"Emitted on_items_removed signal for {item_type}")
         return True
     
     def get_item_quantity(self, item_type: InventoryType) -> int:

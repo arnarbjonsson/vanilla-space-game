@@ -16,7 +16,7 @@ class StateManager:
     
     def __init__(self):
         """Initialize the state manager"""
-        self.current_state = GameState()
+        self.game_state = GameState()
         
     def initialize(self):
         """Initialize the game state"""
@@ -26,10 +26,10 @@ class StateManager:
         """Set up the initial game state"""
         # Create and add player entity at center bottom of larger screen
         player = PlayerEntity(SCREEN_WIDTH // 2, 100)  # Increased from 50 to 100 for better positioning
-        player.set_game_state(self.current_state)  # Give player access to game state for modules
+        player.set_game_state(self.game_state)  # Give player access to game state for modules
         
-        self.current_state.player_entity = player
-        self.current_state.add_entity(player)
+        self.game_state.player_entity = player
+        self.game_state.add_entity(player)
         
         # Auto-equip mining laser for testing
         player.equip_module(MiningLaserModule())
@@ -39,8 +39,7 @@ class StateManager:
         self._spawn_initial_asteroids()
         
         # Initialize game state
-        self.current_state.score = 0
-        self.current_state.is_game_running = True
+        self.game_state.score = 0
         
     def _spawn_initial_asteroids(self):
         """Spawn some initial asteroids for testing"""
@@ -64,7 +63,7 @@ class StateManager:
                 
                 # Check distance from other asteroids
                 too_close = False
-                for asteroid in self.current_state.get_asteroids():
+                for asteroid in self.game_state.get_asteroids():
                     asteroid_distance = ((x - asteroid.x) ** 2 + (y - asteroid.y) ** 2) ** 0.5
                     if asteroid_distance < min_distance_between_asteroids:
                         too_close = True
@@ -76,13 +75,10 @@ class StateManager:
                 attempts += 1
             
             asteroid = AsteroidEntity(x, y)
-            self.current_state.add_entity(asteroid)
+            self.game_state.add_entity(asteroid)
         
     def update(self, delta_time, input_commands):
         """Update game state based on time and input commands"""
-        if not self.current_state.is_game_running:
-            return
-            
         self._process_input_commands(input_commands, delta_time)
         self._update_entities(delta_time)
         self._update_game_logic(delta_time)
@@ -92,36 +88,34 @@ class StateManager:
         for command in commands:
             if command == InputCommand.SHOOT:
                 self._handle_shoot_command()
-            elif command == InputCommand.PAUSE:
-                self.current_state.is_game_running = not self.current_state.is_game_running
             elif command in [InputCommand.ACTIVATE_MODULE_1, InputCommand.ACTIVATE_MODULE_2, 
                            InputCommand.ACTIVATE_MODULE_3, InputCommand.ACTIVATE_MODULE_4]:
                 self._handle_module_activation_command(command)
                 
         # Pass movement commands to player entity
-        if self.current_state.player_entity:
+        if self.game_state.player_entity:
             movement_commands = [cmd for cmd in commands 
                                if cmd in [InputCommand.ROTATE_LEFT, 
                                         InputCommand.ROTATE_RIGHT, 
                                         InputCommand.THRUST]]
-            self.current_state.player_entity.update(delta_time, movement_commands)
+            self.game_state.player_entity.update(delta_time, movement_commands)
         
     def _update_entities(self, delta_time):
         """Update all entities"""
-        for entity in self.current_state.entities:
+        for entity in self.game_state.entities:
             entity.update(delta_time)
             
         # Clean up inactive entities
-        self.current_state.cleanup_inactive_entities()
+        self.game_state.cleanup_inactive_entities()
         
     def _handle_shoot_command(self):
         """Handle shooting action"""
         # For now, just increment score as a placeholder
-        self.current_state.score += 1
+        self.game_state.score += 1
         
     def _handle_module_activation_command(self, command):
         """Handle module activation commands"""
-        if not self.current_state.player_entity:
+        if not self.game_state.player_entity:
             return
         
         # Map commands to module indices
@@ -134,7 +128,7 @@ class StateManager:
         
         module_index = module_index_map.get(command)
         if module_index is not None:
-            success = self.current_state.player_entity.activate_module(module_index)
+            success = self.game_state.player_entity.activate_module(module_index)
             if success:
                 # Could add feedback here (sound, visual effect, etc.)
                 pass
@@ -142,11 +136,11 @@ class StateManager:
     def _update_game_logic(self, delta_time):
         """Update game logic that doesn't depend on input"""
         # Update game timer
-        self.current_state.game_time += delta_time
+        self.game_state.game_time += delta_time
         
         # Add any time-based game logic here
         # For example: enemy spawning, bullet movement, etc.
         
-    def get_current_state(self):
+    def get_current_state(self) -> GameState:
         """Get the current game state"""
-        return self.current_state
+        return self.game_state

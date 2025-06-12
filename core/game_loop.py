@@ -20,7 +20,7 @@ class GameLoop(arcade.View):
         # Initialize the three core systems
         self.input_system = InputSystem()
         self.state_manager = StateManager()
-        self.renderer = Renderer()
+        self.renderer = Renderer(game_state=self.state_manager.get_current_state())
         
         # Set up the systems
         self._setup_systems()

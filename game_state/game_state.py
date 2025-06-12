@@ -15,7 +15,6 @@ class GameState:
         # Game state
         self.score = 0
         self.game_time = 0.0
-        self.is_game_running = False
         
     def add_entity(self, entity):
         """Add an entity to the game state"""
@@ -48,5 +47,4 @@ class GameState:
         self.entities.clear()
         self.player_entity = None
         self.score = 0
-        self.game_time = 0.0
-        self.is_game_running = False 
+        self.game_time = 0.0 

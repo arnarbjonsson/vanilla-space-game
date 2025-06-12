@@ -15,7 +15,6 @@ class InputCommand(Enum):
     
     # Action commands
     SHOOT = "shoot"
-    PAUSE = "pause"
     
     # Module commands
     ACTIVATE_MODULE_1 = "activate_module_1"

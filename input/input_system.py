@@ -48,8 +48,6 @@ class InputSystem:
         # Handle one-time action commands
         if key == arcade.key.SPACE:
             self.commands_this_frame.append(InputCommand.SHOOT)
-        elif key == arcade.key.ESCAPE:
-            self.commands_this_frame.append(InputCommand.PAUSE)
         
         # Handle module activation commands
         elif key == arcade.key.KEY_1:

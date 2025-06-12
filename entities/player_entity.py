@@ -297,20 +297,15 @@ class PlayerEntity(BaseEntity):
         # Add to ship position
         return (self.x + rotated_x, self.y + rotated_y) 
 
-    def _equip_modules(self):
-        """Equip default modules to the ship"""
-        # Create and equip mining laser module
-        mining_module = MiningLaserModule()
-        self.equip_module(mining_module)
-        
-        # Connect to mining module signals
-        mining_module.on_ore_mined.connect(self._on_ore_mined)
-        
-    def _on_ore_mined(self, module, ore_type, amount):
+    def _on_ore_mined(self, module, ore_type, amount, hit_type):
         """Handle ore being mined by adding it to player's inventory"""
-        print(f"Player received mined ore: {amount} units of {ore_type}.")
+        print(f"Player received mined ore signal: {amount} units of {ore_type}")
         if self.inventory:
-            self.inventory.add_item(ore_type, amount)
-            print(f"Added {amount} units of {ore_type} to player inventory.")
+            success = self.inventory.add_item(ore_type, amount)
+            if success:
+                print(f"Successfully added {amount} units of {ore_type} to inventory")
+                print(f"Current inventory contents: {self.inventory.items}")
+            else:
+                print(f"Failed to add {amount} units of {ore_type} to inventory - inventory full?")
         else:
             print("Player inventory not available.") 

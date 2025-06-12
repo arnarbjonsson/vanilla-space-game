@@ -7,15 +7,17 @@
 - [ ] Create more module types for the spaceship (e.g., shield, boost, repair drone)
 - [ ] Visual effects for laser impact on asteroids (particles, sparks, etc.)
 - [ ] **Inventory UI**
-  - [ ] Add inventory display panel to top-right of screen
-  - [ ] Show inventory items with icons, type names, and quantities
-  - [ ] Update display in real-time as inventory changes
-  - [ ] Style panel with semi-transparent background and borders
+  - [ ] Inventory panel in the top-right corner of the screen
+    - [ ] Initially, display the text "Empty" if the inventory has no items
+    - [ ] When items are present, display one line for each type in the inventory
+        - [ ] Each line should show: [icon] quantity X name (e.g., [icon] 12 x Veldspar)
+    - [ ] The UI should respond to inventory changes and update in real time
+    - [ ] Style the panel for clarity and readability
 - [ ] **Critical Hit Mining System**
-  - [ ] Add critical hit chance to mining laser module
-  - [ ] Implement variable mining outcomes (normal, critical, super-critical)
-  - [ ] Add visual feedback for critical hits (larger text, special effects)
-  - [ ] Balance mining rates and critical hit probabilities
+  - [x] Add critical hit chance to mining laser module
+  - [x] Implement variable mining outcomes (normal, critical, super-critical)
+  - [x] Add visual feedback for critical hits (text colors)
+  - [x] Balance mining rates and critical hit probabilities
   - [ ] Add sound effects for different mining outcomes
 - [ ] **Dynamic Audio System with Pyo**
   - [ ] Integrate pyo audio library for procedural sound generation

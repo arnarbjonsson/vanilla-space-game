@@ -24,15 +24,13 @@ class AsteroidRenderer(BaseRenderer):
         self.item_textures = {}  # Cache for loaded item textures
         
         # Connect to asteroid's inventory signals
-        print(f"Created renderer for asteroid at ({asteroid_entity.x}, {asteroid_entity.y})")
-    
+
     def _load_textures(self):
         """Load all asteroid textures"""
         for i in range(1, 7):  # asteroid1.png through asteroid6.png
             try:
                 texture = arcade.load_texture(f"assets/asteroid{i}.png")
                 self.asteroid_textures[i] = texture
-                print(f"Loaded asteroid{i}.png")
             except FileNotFoundError:
                 print(f"Warning: Could not load assets/asteroid{i}.png")
                 self.asteroid_textures[i] = None

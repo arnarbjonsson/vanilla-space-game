@@ -5,17 +5,24 @@ UI Renderer - handles all user interface rendering
 import arcade
 from core.constants import *
 from ui.module_ui import ModuleUI
+from game_state.game_state import GameState
+from ui.inventory import InventoryUIRenderer
 
 
 class UIRenderer:
     """Handles rendering of all UI elements"""
     
-    def __init__(self):
+    def __init__(self, game_state: GameState):
         """Initialize the UI renderer"""
         self.module_ui = ModuleUI()
+        self.inventory_renderer = InventoryUIRenderer(game_state=game_state)
         
-    def render(self, game_state):
-        """Render all UI elements"""
+    def render(self, game_state: GameState):
+        """Render all UI elements
+        
+        Args:
+            game_state: Current game state
+        """
         self._render_hud(game_state)
         self._render_controls_hint()
         
@@ -23,24 +30,25 @@ class UIRenderer:
         self.module_ui.update(game_state.player_entity)
         self.module_ui.render()
         
-        # Render pause overlay if game is paused
-        if not game_state.is_game_running:
-            self._render_pause_overlay()
+        # Render inventory UI
+        self.inventory_renderer.render()
     
-    def handle_mouse_click(self, x, y, game_state):
-        """
-        Handle mouse click events for UI elements
+    def handle_mouse_click(self, x: float, y: float, game_state: GameState) -> bool:
+        """Handle mouse click events
         
         Args:
-            x, y: Mouse click position
+            x: Mouse x coordinate
+            y: Mouse y coordinate
             game_state: Current game state
             
         Returns:
-            bool: True if UI handled the click
+            bool: True if the click was handled by UI
         """
         # Check if module UI handled the click
         if game_state.player_entity:
             return self.module_ui.handle_mouse_click(x, y, game_state.player_entity)
+        
+        # TODO: Add click handling for UI elements
         return False
             
     def _render_hud(self, game_state):
@@ -86,7 +94,7 @@ class UIRenderer:
         # Health text
         arcade.draw_text(
             f"Health: {int(health_percentage * 100)}%",
-            x + bar_width + 10, y,
+            x, y + bar_height + 5,
             WHITE,
             font_size=12
         )
@@ -94,35 +102,8 @@ class UIRenderer:
     def _render_controls_hint(self):
         """Render controls information"""
         arcade.draw_text(
-            "Controls: A/D to rotate, W to thrust, 1-4 for modules, Esc to pause",
+            "Controls: A/D to rotate, W to thrust, 1-4 for modules",
             10, 20,
             WHITE,
             font_size=12
-        )
-        
-    def _render_pause_overlay(self):
-        """Render pause overlay"""
-        # Semi-transparent overlay using correct function
-        arcade.draw_lbwh_rectangle_filled(
-            0, 0, SCREEN_WIDTH, SCREEN_HEIGHT,
-            (0, 0, 0, 128)  # Semi-transparent black
-        )
-        
-        # Pause text
-        arcade.draw_text(
-            "PAUSED",
-            SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2,
-            WHITE,
-            font_size=48,
-            anchor_x="center",
-            anchor_y="center"
-        )
-        
-        arcade.draw_text(
-            "Press ESC to resume",
-            SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50,
-            WHITE,
-            font_size=16,
-            anchor_x="center",
-            anchor_y="center"
         ) 

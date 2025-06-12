@@ -82,14 +82,11 @@ class MinedItemEffectManager:
         on_asteroid_mined.connect(self.on_asteroid_mined)
 
     def add_effect(self, item_type, x, y, amount, hit_type: HitType = HitType.NORMAL):
-        print(f"Effect manager received signal for {item_type} at ({x}, {y})")
         # Load texture if not already cached
         if item_type not in self.item_textures:
             try:
                 texture_path = INVENTORY_ICONS[item_type]
-                print(f"Loading texture from {texture_path}")
                 self.item_textures[item_type] = arcade.load_texture(texture_path)
-                print(f"Successfully loaded texture for {item_type}")
             except (KeyError, FileNotFoundError) as e:
                 print(f"Warning: Could not load texture for {item_type}: {e}")
                 return  # Skip adding effect if texture is missing
@@ -104,11 +101,9 @@ class MinedItemEffectManager:
             hit_type=hit_type
         )
         self.active_effects.append(effect)
-        print(f"Added effect, total active effects: {len(self.active_effects)}")
 
     def on_asteroid_mined(self, asteroid_entity, amount, hit_type: HitType = HitType.NORMAL):
         """Handle the asteroid mined event"""
-        print(f"Effect manager received asteroid mined signal for asteroid at ({asteroid_entity.x}, {asteroid_entity.y})")
         # Position effect above the asteroid, accounting for its radius
         y_offset = asteroid_entity.get_collision_radius() + ITEM_POPUP_OFFSET
         self.add_effect(asteroid_entity.ore_type, asteroid_entity.x, asteroid_entity.y + y_offset, amount, hit_type)
@@ -121,9 +116,6 @@ class MinedItemEffectManager:
                 expired.append(effect)
         for effect in expired:
             self.active_effects.remove(effect)
-            print(f"Effect manager: Removed expired effect, remaining: {len(self.active_effects)}")
-        
-        if self.active_effects:
-            print(f"Effect manager: Rendering {len(self.active_effects)} effects")
+
         for effect in self.active_effects:
             effect.render() 
