@@ -5,23 +5,22 @@ class InventoryUIRenderer:
     """Renders the player's inventory UI"""
     
     # UI Constants
-    PANEL_WIDTH = 200
-    PANEL_HEIGHT = 300
+    PANEL_WIDTH = 300
+    PANEL_HEIGHT = 600
     PANEL_COLOR = (0, 0, 0, 25)  # Black with 10% opacity
-    PADDING = 10
+    PADDING = 30
     TITLE_FONT_SIZE = 20
     ITEM_FONT_SIZE = 16
-    ITEM_SPACING = 25
-    ICON_SIZE = 24
-    FONT_NAME = "Arial"
+    ITEM_SPACING = 48
+    ICON_SIZE = 48
+    FONT_NAME = "EveSansNeue-Regular"
     
     def __init__(self, game_state):
         """Initialize the inventory UI renderer"""
         self.game_state = game_state
         self.item_textures = {}  # Cache for loaded textures
         self._load_textures()
-        print("InventoryUIRenderer initialized")
-    
+
     def _load_textures(self):
         """Load all inventory item textures"""
         for item_type in InventoryType:
@@ -44,12 +43,6 @@ class InventoryUIRenderer:
             print("Cannot render inventory: player inventory is None")
             return
             
-        # Debug log inventory contents
-        if inventory.items:
-            print(f"Current inventory contents: {inventory.items}")
-        else:
-            print("Inventory is empty")
-            
         # Calculate panel position (top-right corner)
         screen_width = arcade.get_window().width
         panel_x = screen_width - self.PANEL_WIDTH - self.PADDING
@@ -66,10 +59,10 @@ class InventoryUIRenderer:
         
         # Draw inventory title
         arcade.draw_text(
-            "Inventory",
+            "Mineral Hold",
             panel_x + self.PADDING,
             panel_y - self.PADDING - self.TITLE_FONT_SIZE,
-            arcade.color.WHITE,
+            arcade.color.ASH_GREY,
             self.TITLE_FONT_SIZE,
             font_name=self.FONT_NAME
         )
@@ -80,7 +73,7 @@ class InventoryUIRenderer:
             arcade.draw_text(
                 "Empty",
                 panel_x + self.PADDING,
-                panel_y - self.PADDING - self.TITLE_FONT_SIZE - self.ITEM_SPACING,
+                panel_y - self.PADDING - self.TITLE_FONT_SIZE - 32,
                 arcade.color.WHITE,
                 self.ITEM_FONT_SIZE,
                 font_name=self.FONT_NAME
@@ -89,7 +82,6 @@ class InventoryUIRenderer:
             # Draw each item in the inventory
             y = panel_y - self.PADDING - self.TITLE_FONT_SIZE - self.ITEM_SPACING
             for item_type, quantity in inventory.items.items():
-                print(f"Drawing inventory item: {item_type} x {quantity}")
                 # Draw item icon
                 if item_type in self.item_textures and self.item_textures[item_type]:
                     arcade.draw_texture_rect(
@@ -107,9 +99,9 @@ class InventoryUIRenderer:
                 text = f"{quantity} x {name}"
                 arcade.draw_text(
                     text,
-                    panel_x + self.PADDING + self.ICON_SIZE + self.ITEM_SPACING,
-                    y,
-                    arcade.color.WHITE,
+                    panel_x + self.PADDING + self.ICON_SIZE + 4,
+                    y - 8,
+                    arcade.color.Color(255, 255, 255, 200),  # Semi-transparent white
                     self.ITEM_FONT_SIZE,
                     font_name=self.FONT_NAME
                 )

@@ -21,6 +21,8 @@ from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE
 
 def main():
     """Main function to start the game"""
+    arcade.load_font("assets/fonts/EveSansNeue-Regular.otf")
+
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
     game_loop = GameLoop(window)
     
