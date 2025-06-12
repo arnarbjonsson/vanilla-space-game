@@ -1,4 +1,5 @@
 import arcade
+import math
 from game_state.inventory_types import INVENTORY_ICONS, InventoryType, ORE_NAMES
 
 class InventoryUIRenderer:
@@ -20,12 +21,15 @@ class InventoryUIRenderer:
     CAPACITY_BAR_PADDING = 4
     CAPACITY_BAR_BG_COLOR = (255, 255, 255, 51)  # White with 20% opacity
     CAPACITY_BAR_FILL_COLOR = (255, 255, 255, 255)  # Solid white
+    WARNING_THRESHOLD = 0.9  # 90% full
+    BLINK_SPEED = 2.0  # Blinks per second
     
     def __init__(self, game_state):
         """Initialize the inventory UI renderer"""
         self.game_state = game_state
         self.item_textures = {}  # Cache for loaded textures
         self._load_textures()
+        self.blink_time = 0.0  # Track time for blinking effect
 
     def _load_textures(self):
         """Load all inventory item textures"""
@@ -61,12 +65,23 @@ class InventoryUIRenderer:
         
         # Draw fill
         if fill_width > 0:
+            # Calculate blink opacity if near full
+            opacity = 255
+            if current / maximum >= self.WARNING_THRESHOLD:
+                # Update blink time
+                self.blink_time += arcade.get_window().delta_time
+                # Calculate opacity using sine wave (0.5 to 1.0 range)
+                opacity = int(255 * (0.5 + 0.5 * math.sin(self.blink_time * self.BLINK_SPEED * math.pi)))
+            
+            # Create color with current opacity
+            fill_color = (255, 255, 255, opacity)
+            
             arcade.draw_lbwh_rectangle_filled(
                 x,
                 y - self.CAPACITY_BAR_HEIGHT,
                 fill_width,
                 self.CAPACITY_BAR_HEIGHT,
-                self.CAPACITY_BAR_FILL_COLOR
+                fill_color
             )
     
     def render(self):
