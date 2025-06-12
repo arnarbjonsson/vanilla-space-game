@@ -38,7 +38,7 @@ class Renderer:
         self.background_renderer.render()
         
         # Then render all entities
-        self._render_entities(game_state.entities)
+        self._render_entities(game_state)
         
         # Render effects between entities
         self.effects_renderer.render_effects(game_state)
@@ -61,17 +61,14 @@ class Renderer:
         """
         return self.ui_renderer.handle_mouse_click(x, y, game_state)
 
-    def _render_entities(self, entities):
+    def _render_entities(self, game_state):
         """Render all entities using their specific renderers"""
-        for entity in entities:
-            if isinstance(entity, PlayerEntity):
-                self.player_renderer.render(entity)
-            elif isinstance(entity, AsteroidEntity):
+        for entity in game_state.entities:
+            if isinstance(entity, AsteroidEntity):
                 # Get or create renderer for this asteroid
                 if entity not in self.asteroid_renderers:
                     renderer = AsteroidRenderer(entity)
                     self.asteroid_renderers[entity] = renderer
                 self.asteroid_renderers[entity].render(entity)
 
-    def update(self, game_state):
-        self.mined_item_effect_manager.update()
+        self.player_renderer.render(game_state.player_entity)

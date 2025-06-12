@@ -15,6 +15,12 @@ class InventoryUIRenderer:
     ICON_SIZE = 48
     FONT_NAME = "EveSansNeue-Regular"
     
+    # Capacity bar constants
+    CAPACITY_BAR_HEIGHT = 8
+    CAPACITY_BAR_PADDING = 4
+    CAPACITY_BAR_BG_COLOR = (255, 255, 255, 51)  # White with 20% opacity
+    CAPACITY_BAR_FILL_COLOR = (255, 255, 255, 255)  # Solid white
+    
     def __init__(self, game_state):
         """Initialize the inventory UI renderer"""
         self.game_state = game_state
@@ -30,6 +36,38 @@ class InventoryUIRenderer:
             except (KeyError, FileNotFoundError) as e:
                 print(f"Warning: Could not load texture for {item_type}: {e}")
                 self.item_textures[item_type] = None
+    
+    def _draw_capacity_bar(self, x, y, width, current, maximum):
+        """Draw the inventory capacity bar
+        
+        Args:
+            x: Left x coordinate
+            y: Top y coordinate
+            width: Width of the bar
+            current: Current inventory usage
+            maximum: Maximum inventory capacity
+        """
+        # Draw background
+        arcade.draw_lbwh_rectangle_filled(
+            x,
+            y - self.CAPACITY_BAR_HEIGHT,
+            width,
+            self.CAPACITY_BAR_HEIGHT,
+            self.CAPACITY_BAR_BG_COLOR
+        )
+        
+        # Calculate fill width based on current/maximum
+        fill_width = (current / maximum) * width
+        
+        # Draw fill
+        if fill_width > 0:
+            arcade.draw_lbwh_rectangle_filled(
+                x,
+                y - self.CAPACITY_BAR_HEIGHT,
+                fill_width,
+                self.CAPACITY_BAR_HEIGHT,
+                self.CAPACITY_BAR_FILL_COLOR
+            )
     
     def render(self):
         """Render the inventory UI"""
@@ -67,20 +105,30 @@ class InventoryUIRenderer:
             font_name=self.FONT_NAME
         )
         
+        # Draw inventory capacity bar
+        bar_y = panel_y - self.PADDING - self.TITLE_FONT_SIZE - 32
+        self._draw_capacity_bar(
+            panel_x + self.PADDING,
+            bar_y,
+            self.PANEL_WIDTH - (self.PADDING * 2),
+            inventory.get_total_units(),
+            inventory.max_units
+        )
+        
         # Draw inventory contents
         if not inventory.items:
             # Draw "Empty" text if inventory is empty
             arcade.draw_text(
                 "Empty",
                 panel_x + self.PADDING,
-                panel_y - self.PADDING - self.TITLE_FONT_SIZE - 32,
+                bar_y - self.CAPACITY_BAR_HEIGHT - self.ITEM_SPACING,
                 arcade.color.WHITE,
                 self.ITEM_FONT_SIZE,
                 font_name=self.FONT_NAME
             )
         else:
             # Draw each item in the inventory
-            y = panel_y - self.PADDING - self.TITLE_FONT_SIZE - self.ITEM_SPACING
+            y = bar_y - self.CAPACITY_BAR_HEIGHT - self.ITEM_SPACING
             for item_type, quantity in inventory.items.items():
                 # Draw item icon
                 if item_type in self.item_textures and self.item_textures[item_type]:

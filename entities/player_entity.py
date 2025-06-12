@@ -3,6 +3,9 @@ Player Entity - handles the player spaceship logic
 """
 
 import math
+
+import arcade
+
 from entities.base_entity import BaseEntity
 from input.commands import InputCommand
 from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
@@ -15,7 +18,7 @@ PLAYER_MAX_VELOCITY = 80       # pixels per second
 PLAYER_DRAG = 0.2              # drag coefficient (higher = more drag)
 PLAYER_MAX_HEALTH = 100        # maximum health points
 PLAYER_MAX_MODULES = 4         # maximum number of modules that can be equipped
-PLAYER_INVENTORY_SIZE = 100    # maximum number of units the player can carry
+PLAYER_INVENTORY_SIZE = 200    # maximum number of units the player can carry
 
 # Module locator positions (relative to ship center)
 MODULE_LOCATORS = [
@@ -24,6 +27,8 @@ MODULE_LOCATORS = [
     (30, -15),   # Bottom
     (30, 15),    # Top
 ]
+
+INVENTORY_FULL_SOUND = arcade.load_sound("assets/audio/warning.wav")
 
 class PlayerEntity(BaseEntity):
     """Player spaceship entity with rotation and thrust physics"""
@@ -48,10 +53,18 @@ class PlayerEntity(BaseEntity):
         
         # Inventory system
         self.inventory = Inventory(max_units=PLAYER_INVENTORY_SIZE)
+        self.inventory.on_items_added.connect(self.on_inventory_items_added)
         
         # Game state reference (for modules to access other entities)
         self.game_state = None
-        
+
+    def on_inventory_items_added(self, player_inventory, item_type, quantity):
+        self.check_play_inventory_full_sound()
+
+    def check_play_inventory_full_sound(self):
+        if self.inventory.get_total_units() / self.inventory.max_units > 0.9:
+            INVENTORY_FULL_SOUND.play()
+
     def update(self, delta_time, input_commands=None):
         """Update player logic based on input and physics"""
         if not self.active:
@@ -306,6 +319,7 @@ class PlayerEntity(BaseEntity):
                 print(f"Successfully added {amount} units of {ore_type} to inventory")
                 print(f"Current inventory contents: {self.inventory.items}")
             else:
+                self.check_play_inventory_full_sound()
                 print(f"Failed to add {amount} units of {ore_type} to inventory - inventory full?")
         else:
             print("Player inventory not available.") 
