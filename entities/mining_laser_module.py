@@ -11,8 +11,6 @@ from blinker import Signal
 from game_state.inventory_types import InventoryType, HitType
 
 # Mining Laser Constants - Easy to tune
-MINING_LASER_CYCLE_TIME = 4.0      # Total cycle time in seconds
-MINING_LASER_ACTIVE_DURATION = 3.5  # How long laser beam stays visible
 MINING_RANGE = 200                   # Maximum mining distance in pixels
 ORE_PER_CYCLE = 20                   # Amount of ore mined per activation (10x)
 
@@ -31,11 +29,14 @@ FADE_OUT_DURATION = 0.5  # Duration of fade out in seconds
 class MiningLaserModule(BaseModule):
     """Mining laser module that extracts ore from nearby asteroids"""
     
+    # Override cycle times
+    CYCLE_ACTIVE_TIME = 15.0  # How long laser beam stays visible
+    CYCLE_COOLDOWN_TIME = 1.0  # Total cycle time in seconds
+    
     def __init__(self):
         """Initialize the mining laser module"""
         super().__init__(
             name="Mining Laser",
-            cycle_time=MINING_LASER_CYCLE_TIME,
             icon_path="assets/ming_laser_icon.png"  # Icon for UI 
         )
         
@@ -51,7 +52,6 @@ class MiningLaserModule(BaseModule):
         
         # Visual effects
         self.current_target = None  # Currently targeted asteroid for visual effects
-        self.active_duration = MINING_LASER_ACTIVE_DURATION
         self.active_timer = 0.0     # Timer for active state
         
         # Audio
@@ -107,6 +107,7 @@ class MiningLaserModule(BaseModule):
         
         # Store target for visual effects and register laser beam
         self.current_target = target_asteroid
+        target_asteroid.start_mining(self)
         return True
     
     def on_module_effect_end(self):
@@ -193,6 +194,8 @@ class MiningLaserModule(BaseModule):
     def _start_cooldown(self):
         """Override to clear visual target when laser stops firing"""
         super()._start_cooldown()
+        if self.current_target:
+            self.current_target.stop_mining()
         self.current_target = None
         self._start_fade_out()
     
@@ -226,7 +229,7 @@ class MiningLaserModule(BaseModule):
         self.active_timer += delta_time
         
         # After active duration, execute end effect and start cooldown
-        if self.active_timer >= self.active_duration:
+        if self.active_timer >= self.CYCLE_ACTIVE_TIME:
             self.active_timer = 0.0
             self.on_module_effect_end()
             self._start_cooldown()

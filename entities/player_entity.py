@@ -312,14 +312,9 @@ class PlayerEntity(BaseEntity):
 
     def _on_ore_mined(self, module, ore_type, amount, hit_type):
         """Handle ore being mined by adding it to player's inventory"""
-        print(f"Player received mined ore signal: {amount} units of {ore_type}")
         if self.inventory:
             success = self.inventory.add_item(ore_type, amount)
-            if success:
-                print(f"Successfully added {amount} units of {ore_type} to inventory")
-                print(f"Current inventory contents: {self.inventory.items}")
-            else:
+            if not success:
                 self.check_play_inventory_full_sound()
-                print(f"Failed to add {amount} units of {ore_type} to inventory - inventory full?")
         else:
-            print("Player inventory not available.") 
+            print("Player inventory not available.")

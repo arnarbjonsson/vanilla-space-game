@@ -59,9 +59,9 @@ class ModuleButton:
         # Draw button border
         arcade.draw_circle_outline(self.x, self.y, self.radius, border_color, 3)
         
-        # Draw cooldown progress arc if cooling down
-        if self.module.state == "cooling_down":
-            self._render_cooldown_progress()
+        # Draw cycle progress arc if not ready
+        if self.module.state != "ready":
+            self._render_cycle_progress()
         
         # Draw module icon
         if self.icon_texture:
@@ -84,16 +84,16 @@ class ModuleButton:
                 anchor_y="center"
             )
     
-    def _render_cooldown_progress(self):
-        """Render cooldown progress as a circular arc"""
-        progress = self.module.get_cooldown_progress()
+    def _render_cycle_progress(self):
+        """Render cycle progress as a circular arc"""
+        progress = self.module.get_cycle_progress()
         
         # Draw progress arc (from top, clockwise)
         start_angle = 90  # Start at top
         end_angle = start_angle - (360 * progress)  # Clockwise progress
-        
+
         if progress > 0:
-            # Draw the remaining cooldown arc in dark red (more visible against orange)
+            # Draw the remaining cycle arc in dark red (more visible against orange)
             arcade.draw_arc_outline(
                 self.x, self.y, 
                 self.radius * 2, self.radius * 2,  # width, height

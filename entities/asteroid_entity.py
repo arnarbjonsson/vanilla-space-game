@@ -71,9 +71,15 @@ class AsteroidEntity(BaseEntity):
         max_ore = int(ASTEROID_MAX_ORE * (0.5 + size_factor * 0.5))  # 50-100% of max ore
         initial_ore = random.randint(min_ore, max_ore)
         
+        # Mining state
+        self.active_mining_module = None  # Reference to active mining module
+
         # Create inventory with initial ore
         self.inventory = Inventory(max_units=initial_ore)
         self.inventory.add_item(self.ore_type, initial_ore)
+        
+        # Cache the collision radius
+        self._cached_radius = None
         
     def update(self, delta_time, input_commands=None):
         """Update asteroid logic (rotation and depletion check)"""
@@ -88,6 +94,14 @@ class AsteroidEntity(BaseEntity):
         if self.is_depleted():
             self.destroy()
             
+    def start_mining(self, mining_module):
+        """Start mining this asteroid with the given module"""
+        self.active_mining_module = mining_module
+        
+    def stop_mining(self):
+        """Stop mining this asteroid"""
+        self.active_mining_module = None
+        
     def mine_ore(self, amount, hit_type=None):
         """Mine ore from the asteroid"""
         if not self.inventory:
@@ -105,9 +119,19 @@ class AsteroidEntity(BaseEntity):
         
     def get_collision_radius(self):
         """Get the collision radius based on asteroid type and scale"""
-        # Base radius varies by asteroid type, scaled by the scale factor
-        base_radius = ASTEROID_BASE_RADII.get(self.asteroid_type, 30)
-        return base_radius * self.scale
+        if self._cached_radius is None:
+            # Load the texture to get the actual size
+            texture_path = f"assets/asteroid{self.asteroid_type}.png"
+            try:
+                texture = arcade.load_texture(texture_path)
+                # Use the texture's width and height to determine the radius
+                radius = max(texture.width, texture.height) / 2
+                self._cached_radius = radius * self.scale
+            except FileNotFoundError:
+                # Fallback to base radius if texture is not found
+                base_radius = ASTEROID_BASE_RADII.get(self.asteroid_type, 30)
+                self._cached_radius = base_radius * self.scale
+        return self._cached_radius
         
     def is_depleted(self):
         """Check if the asteroid has no ore remaining"""

@@ -16,17 +16,19 @@ class ModuleState:
 class BaseModule(ABC):
     """Abstract base class for all spaceship modules"""
     
-    def __init__(self, name, cycle_time, icon_path=None):
+    # Class-level constants for cycle times
+    CYCLE_ACTIVE_TIME = 3.5  # Time in seconds for active state
+    CYCLE_COOLDOWN_TIME = 4.0  # Time in seconds for cooldown state
+    
+    def __init__(self, name, icon_path=None):
         """
-        Initialize module with cycle time
+        Initialize module
         
         Args:
             name: Display name of the module
-            cycle_time: Time in seconds for complete cycle (cooldown)
             icon_path: Path to module icon for UI
         """
         self.name = name
-        self.cycle_time = cycle_time
         self.icon_path = icon_path
         
         # State management
@@ -91,19 +93,21 @@ class BaseModule(ABC):
     def _start_cooldown(self):
         """Start the cooldown period"""
         self.state = ModuleState.COOLING_DOWN
-        self.cooldown_remaining = self.cycle_time
+        self.cooldown_remaining = self.CYCLE_COOLDOWN_TIME
     
-    def get_cooldown_progress(self):
+    def get_cycle_progress(self):
         """
-        Get cooldown progress as a percentage
+        Get cycle progress as a percentage
         
         Returns:
-            float: Progress from 0.0 (just started cooldown) to 1.0 (ready)
+            float: Progress from 0.0 (just started) to 1.0 (ready)
         """
         if self.state == ModuleState.READY:
             return 1.0
         elif self.state == ModuleState.COOLING_DOWN:
-            return 1.0 - (self.cooldown_remaining / self.cycle_time)
+            return 1.0 - (self.cooldown_remaining / self.CYCLE_COOLDOWN_TIME)
+        elif self.state == ModuleState.ACTIVE:
+            return self.active_timer / self.CYCLE_ACTIVE_TIME
         else:
             return 0.0
     

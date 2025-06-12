@@ -3,9 +3,10 @@ Asteroid Renderer - handles rendering of asteroid entities
 """
 
 import arcade
+
+
 from rendering.base_renderer import BaseRenderer
-from core.constants import *
-from game_state.inventory_types import INVENTORY_ICONS
+from game_state.inventory_types import ORE_NAMES
 
 # Mined item effect constants
 ITEM_POPUP_LIFETIME = 60  # Frames
@@ -15,6 +16,13 @@ ITEM_POPUP_FADE_START = 45  # When to start fading out
 
 class AsteroidRenderer(BaseRenderer):
     """Handles rendering of asteroid entities with different textures"""
+    
+    # Mining gauge constants
+    GAUGE_THICKNESS = 8
+    GAUGE_COLOR = (255, 255, 255, 100)  # Semi-transparent white
+    GAUGE_BG_COLOR = (255, 255, 255, 25)  # Very transparent white
+    GAUGE_OFFSET = 30
+    TEXT_COLOR = arcade.color.Color(255, 255, 255, 128)
     
     def __init__(self, asteroid_entity):
         """Initialize the asteroid renderer and load all asteroid textures"""
@@ -35,56 +43,81 @@ class AsteroidRenderer(BaseRenderer):
                 print(f"Warning: Could not load assets/asteroid{i}.png")
                 self.asteroid_textures[i] = None
     
-    def render(self, entity):
-        """Render the asteroid entity directly (no coordinate transform needed)"""
-        self._draw_asteroid_texture(entity)
-
-    def render_local(self, entity, transform):
-        """Render the asteroid entity - using world coordinates for simplicity"""
-        self._draw_asteroid_texture(entity)
-
-    def _draw_asteroid_texture(self, entity):
-        """Draw the asteroid texture at the entity's world position"""
-        # Get the appropriate texture for this asteroid
-        texture = self.asteroid_textures.get(entity.asteroid_type)
-        
-        if texture:
-            # Calculate the actual size based on the texture size and scale
-            actual_width = texture.width * entity.scale
-            actual_height = texture.height * entity.scale
+    def render_local(self, asteroid, transform):
+        """Render an asteroid entity in local coordinates"""
+        if not asteroid.active:
+            return
             
-            # Draw the texture at the entity's world position with subtle rotation
-            arcade.draw_texture_rect(
-                texture,
-                arcade.XYWH(entity.x, entity.y, actual_width, actual_height),
-                angle=entity.rotation
-            )
-        else:
-            # Fallback: draw a simple circle if texture fails to load
-            self._draw_asteroid_fallback(entity)
+        # Try to render with texture first
+        texture = self.asteroid_textures.get(asteroid.asteroid_type)
+        # Calculate the actual size based on the texture size and scale
+        actual_width = texture.width * asteroid.scale
+        actual_height = texture.height * asteroid.scale
+
+        # Draw the texture at the entity's world position with subtle rotation
+        arcade.draw_texture_rect(
+            texture,
+            arcade.XYWH(asteroid.x, asteroid.y, actual_width, actual_height),
+            angle=asteroid.rotation
+        )
+
+        # Draw mining gauge if asteroid is being mined
+        if asteroid.active_mining_module:
+            self._draw_mining_gauge(asteroid)
+        
+        # Draw ore type label
+        self._draw_ore_label(asteroid, asteroid.get_collision_radius())
     
-    def _draw_asteroid_fallback(self, entity):
-        """Fallback circle drawing if texture is not available"""
-        radius = entity.get_collision_radius()
+    def _draw_mining_gauge(self, asteroid):
+        """Draw the mining cycle gauge around the asteroid"""
+        # Calculate gauge radius (slightly larger than asteroid)
+        asteroid_radius = asteroid.get_collision_radius()
+        gauge_radius = asteroid_radius + self.GAUGE_OFFSET
         
-        # Draw a colored circle based on ore type
-        ore_colors = {
-            'iron': (128, 128, 128),      # Gray
-            'copper': (184, 115, 51),     # Brown
-            'gold': (255, 215, 0),        # Gold
-            'platinum': (229, 228, 226)   # Silver
-        }
+        # Draw background circle
+        arcade.draw_arc_outline(
+            asteroid.x,
+            asteroid.y,
+            gauge_radius * 2,
+            gauge_radius * 2,
+            self.GAUGE_BG_COLOR,
+            0,
+            360,
+            self.GAUGE_THICKNESS
+        )
         
-        color = ore_colors.get(entity.ore_type, WHITE)
+        # Get progress from the mining module if available, otherwise use asteroid's progress
+        progress = asteroid.active_mining_module.get_cycle_progress()
+        angle = 360 * progress
+
+        print("progress", progress, "angle", angle)
         
-        arcade.draw_circle_filled(entity.x, entity.y, radius, color)
+        # Draw progress arc1
+        arcade.draw_arc_outline(
+            asteroid.x,
+            asteroid.y,
+            gauge_radius * 2,
+            gauge_radius * 2,
+            self.GAUGE_COLOR,
+            0,  # Start from top
+            angle,  # End based on progress
+            self.GAUGE_THICKNESS
+        )
         
-        # Draw a simple outline
-        arcade.draw_circle_outline(entity.x, entity.y, radius, WHITE, 2)
-        
-        # Draw ore remaining indicator (small text)
+    def _draw_ore_label(self, asteroid, radius):
+        """Draw the ore type label above the asteroid, only if inventory is not full"""
+        # Only show label if asteroid has been mined at least once (inventory not full)
+        if asteroid.inventory.get_item_quantity(asteroid.ore_type) == asteroid.inventory.max_units:
+            return
+        # Get ore name
+        ore_name = ORE_NAMES.get(asteroid.ore_type, asteroid.ore_type.name)
+        # Draw ore name
         arcade.draw_text(
-            str(entity.ore_remaining),
-            entity.x - 5, entity.y - 5,
-            WHITE, 12
+            ore_name,
+            asteroid.x,
+            asteroid.y + radius + 10,
+            self.TEXT_COLOR,  # Semi-transparent white
+            12,
+            anchor_x="center",
+            font_name="EveSansNeue-Regular",
         )
