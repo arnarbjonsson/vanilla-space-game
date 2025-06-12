@@ -3,16 +3,24 @@ Mining Laser Module - mines ore from nearby asteroids
 """
 
 import math
+import random
 from entities.base_module import BaseModule
 import time
 import arcade
 from blinker import Signal
+from game_state.inventory_types import InventoryType, HitType
 
 # Mining Laser Constants - Easy to tune
 MINING_LASER_CYCLE_TIME = 4.0      # Total cycle time in seconds
 MINING_LASER_ACTIVE_DURATION = 3.5  # How long laser beam stays visible
 MINING_RANGE = 200                   # Maximum mining distance in pixels
-ORE_PER_CYCLE = 2                   # Amount of ore mined per activation
+ORE_PER_CYCLE = 20                   # Amount of ore mined per activation (10x)
+
+# Critical Hit Constants
+CRITICAL_HIT_CHANCE = 0.25          # 25% chance for critical hit
+SUPER_CRITICAL_HIT_CHANCE = 0.05    # 5% chance for super critical hit
+CRITICAL_MULTIPLIER = 1.25          # 25% more ore for critical hits
+SUPER_CRITICAL_MULTIPLIER = 1.5     # 50% more ore for super critical hits
 
 # Audio effect constants
 LASER_SOUND = arcade.Sound("assets/audio/laser-beam.wav")
@@ -39,6 +47,7 @@ class MiningLaserModule(BaseModule):
         self.total_ore_mined = 0
         self.last_mined_ore_type = None
         self.last_mined_amount = 0
+        self.last_hit_type = HitType.NORMAL  # Track the last hit type for visual feedback
         
         # Visual effects
         self.current_target = None  # Currently targeted asteroid for visual effects
@@ -52,7 +61,25 @@ class MiningLaserModule(BaseModule):
         
         # Signal for when ore is mined
         self.on_ore_mined = Signal()
+    
+    def _determine_hit_type(self) -> tuple[HitType, float]:
+        """Determine the type of hit and its multiplier based on random rolls
         
+        Returns:
+            tuple[HitType, float]: The hit type and its corresponding multiplier
+        """
+        roll = random.random()
+        
+        # Check for super critical first (5% chance)
+        if roll < HitType.SUPER_CRITICAL.chance:
+            return HitType.SUPER_CRITICAL, HitType.SUPER_CRITICAL.multiplier
+            
+        # Then check for critical (25% chance)
+        if roll < HitType.SUPER_CRITICAL.chance + HitType.CRITICAL.chance:
+            return HitType.CRITICAL, HitType.CRITICAL.multiplier
+            
+        # Otherwise normal hit (70% chance)
+        return HitType.NORMAL, HitType.NORMAL.multiplier
     
     def on_module_effect_start(self, ship_entity):
         """
@@ -75,6 +102,7 @@ class MiningLaserModule(BaseModule):
             self.current_target = None
             self.last_mined_amount = 0
             self.last_mined_ore_type = None
+            self.last_hit_type = HitType.NORMAL
             return False
         
         # Store target for visual effects and register laser beam
@@ -98,13 +126,19 @@ class MiningLaserModule(BaseModule):
             print("Mining failed: No ore mined (asteroid depleted).")
             self.last_mined_amount = 0
             self.last_mined_ore_type = None
+            self.last_hit_type = HitType.NORMAL
             return False
+        
+        # Determine hit type and multiplier
+        hit_type, multiplier = self._determine_hit_type()
+        self.last_hit_type = hit_type
             
         # Calculate how much we can mine (either full cycle or remaining amount)
-        mining_amount = min(self.ore_per_cycle, remaining_ore)
+        base_mining_amount = min(self.ore_per_cycle, remaining_ore)
+        mining_amount = int(base_mining_amount * multiplier)
             
         # Mine ore from the target asteroid
-        success = self.current_target.mine_ore(mining_amount)
+        success = self.current_target.mine_ore(mining_amount, hit_type)
         
         if success:
             # Update mining stats
@@ -115,17 +149,19 @@ class MiningLaserModule(BaseModule):
             self._play_ore_mined_sound()
             
             # Emit signal with mined ore details
-            print(f"Mining successful: Mined {mining_amount} units of {self.current_target.ore_type}.")
+            print(f"Mining successful: {hit_type.name_display.upper()} hit! Mined {mining_amount} units of {self.current_target.ore_type}.")
             self.on_ore_mined.send(
                 self,
                 ore_type=self.current_target.ore_type,
-                amount=mining_amount
+                amount=mining_amount,
+                hit_type=hit_type
             )
             return True
         else:
             # No ore was mined (asteroid was already depleted)
             self.last_mined_amount = 0
             self.last_mined_ore_type = None
+            self.last_hit_type = HitType.NORMAL
             print("Mining failed: No ore mined (asteroid depleted).")
             return False
     

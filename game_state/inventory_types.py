@@ -101,3 +101,39 @@ ORE_MINERAL_RATES: Dict[InventoryType, Dict[InventoryType, float]] = {
         InventoryType.ISOGEN: 0.1,     # 10% Isogen
     }
 }
+
+class HitType(Enum):
+    """Enum representing different types of mining hits"""
+    NORMAL = auto()
+    CRITICAL = auto()
+    SUPER_CRITICAL = auto()
+
+    @property
+    def multiplier(self) -> float:
+        """Get the ore multiplier for this hit type"""
+        if self == HitType.NORMAL:
+            return 1.0
+        elif self == HitType.CRITICAL:
+            return 1.25
+        elif self == HitType.SUPER_CRITICAL:
+            return 1.5
+
+    @property
+    def chance(self) -> float:
+        """Get the base chance for this hit type"""
+        if self == HitType.NORMAL:
+            return 0.70  # 70%
+        elif self == HitType.CRITICAL:
+            return 0.25  # 25%
+        elif self == HitType.SUPER_CRITICAL:
+            return 0.05  # 5%
+
+    @property
+    def name_display(self) -> str:
+        """Get the display name for this hit type"""
+        if self == HitType.NORMAL:
+            return "normal"
+        elif self == HitType.CRITICAL:
+            return "critical"
+        elif self == HitType.SUPER_CRITICAL:
+            return "super_critical"

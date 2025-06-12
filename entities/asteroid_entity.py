@@ -19,8 +19,8 @@ ASTEROID_MIN_SCALE = 0.3         # Minimum size scale factor
 ASTEROID_MAX_SCALE = 0.6         # Maximum size scale factor
 ASTEROID_MIN_ROTATION_SPEED = 3   # Minimum rotation speed (degrees/second)
 ASTEROID_MAX_ROTATION_SPEED = 5   # Maximum rotation speed (degrees/second)
-ASTEROID_MIN_ORE = 3              # Minimum ore amount per asteroid
-ASTEROID_MAX_ORE = 10             # Maximum ore amount per asteroid
+ASTEROID_MIN_ORE = 30             # Minimum ore amount per asteroid (10x)
+ASTEROID_MAX_ORE = 100            # Maximum ore amount per asteroid (10x)
 
 # Asteroid collision radii by type (base values before scaling)
 ASTEROID_BASE_RADII = {
@@ -62,7 +62,14 @@ class AsteroidEntity(BaseEntity):
         
         # Initialize ore
         self.ore_type = random.choice(ASTEROID_ORE_TYPES)
-        initial_ore = random.randint(ASTEROID_MIN_ORE, ASTEROID_MAX_ORE)
+        
+        # Calculate ore amount based on asteroid size
+        # Scale factor is between 0.3 and 0.6, so we'll use it to scale the ore amount
+        # This means smaller asteroids will have proportionally less ore
+        size_factor = (self.scale - ASTEROID_MIN_SCALE) / (ASTEROID_MAX_SCALE - ASTEROID_MIN_SCALE)
+        min_ore = int(ASTEROID_MIN_ORE * (0.5 + size_factor * 0.5))  # 50-100% of min ore
+        max_ore = int(ASTEROID_MAX_ORE * (0.5 + size_factor * 0.5))  # 50-100% of max ore
+        initial_ore = random.randint(min_ore, max_ore)
         
         # Create inventory with initial ore
         self.inventory = Inventory(max_units=initial_ore)
@@ -81,7 +88,7 @@ class AsteroidEntity(BaseEntity):
         if self.is_depleted():
             self.destroy()
             
-    def mine_ore(self, amount):
+    def mine_ore(self, amount, hit_type=None):
         """Mine ore from the asteroid"""
         if not self.inventory:
             return False
@@ -89,7 +96,7 @@ class AsteroidEntity(BaseEntity):
         success = self.inventory.remove_item(self.ore_type, amount)
         if success:
             # Emit the asteroid mined signal
-            on_asteroid_mined.send(self, amount=amount)
+            on_asteroid_mined.send(self, amount=amount, hit_type=hit_type)
 
         if self.is_depleted():
             DEPLETED_SOUND.play()

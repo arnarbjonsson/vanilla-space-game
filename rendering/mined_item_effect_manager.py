@@ -1,22 +1,39 @@
 import arcade
-from game_state.inventory_types import INVENTORY_ICONS
+from game_state.inventory_types import INVENTORY_ICONS, HitType
 from game_state.game_events import on_asteroid_mined
 
-ITEM_POPUP_LIFETIME = 2.0  # 5 seconds
+# Effect timing constants
+ITEM_POPUP_LIFETIME = 2.0  # 2 seconds
 ITEM_POPUP_SPEED = 25  # Pixels per second
-ITEM_POPUP_SIZE = 48  # Doubled from 32
+ITEM_POPUP_SIZE = 48  # Size of the item icon
 ITEM_POPUP_OFFSET = 50  # Distance above asteroid
+
+# Visual effect constants for different hit types
+NORMAL_HIT_COLOR = arcade.color.WHITE
+CRITICAL_HIT_COLOR = arcade.color.GOLD
+SUPER_CRITICAL_HIT_COLOR = arcade.color.ORANGE_RED
+
+TEXT_SIZE = 16  # Consistent text size for all hit types
 
 class OreMinedIndicatorEffect:
     """Represents a single ore mined indicator effect"""
     
-    def __init__(self, item_type, x, y, amount, texture):
+    def __init__(self, item_type, x, y, amount, texture, hit_type: HitType = HitType.NORMAL):
         self.item_type = item_type
         self.x = x
         self.y = y
         self.amount = amount
         self.texture = texture
+        self.hit_type = hit_type
         self.time_created = arcade.get_window().time
+        
+        # Set text color based on hit type
+        if hit_type == HitType.SUPER_CRITICAL:
+            self.text_color = SUPER_CRITICAL_HIT_COLOR
+        elif hit_type == HitType.CRITICAL:
+            self.text_color = CRITICAL_HIT_COLOR
+        else:
+            self.text_color = NORMAL_HIT_COLOR
         
     def get_remaining_lifetime(self):
         """Get the remaining lifetime of the effect in seconds"""
@@ -46,13 +63,13 @@ class OreMinedIndicatorEffect:
             angle=0,
         )
         
-        # Draw the amount text
+        # Draw the amount text with appropriate color and consistent size
         arcade.draw_text(
             f"+{self.amount}",
             self.x,
             self.y - ITEM_POPUP_SIZE/2 - 10,  # Position text below the icon
-            arcade.color.WHITE,
-            font_size=16,
+            self.text_color,
+            font_size=TEXT_SIZE,
             anchor_x="center",
             anchor_y="center"
         )
@@ -64,7 +81,7 @@ class MinedItemEffectManager:
         # Connect to the asteroid mined signal
         on_asteroid_mined.connect(self.on_asteroid_mined)
 
-    def add_effect(self, item_type, x, y, amount):
+    def add_effect(self, item_type, x, y, amount, hit_type: HitType = HitType.NORMAL):
         print(f"Effect manager received signal for {item_type} at ({x}, {y})")
         # Load texture if not already cached
         if item_type not in self.item_textures:
@@ -83,17 +100,18 @@ class MinedItemEffectManager:
             x=x,
             y=y + ITEM_POPUP_OFFSET,  # Start above the asteroid
             amount=amount,
-            texture=self.item_textures[item_type]
+            texture=self.item_textures[item_type],
+            hit_type=hit_type
         )
         self.active_effects.append(effect)
         print(f"Added effect, total active effects: {len(self.active_effects)}")
 
-    def on_asteroid_mined(self, asteroid_entity, amount):
+    def on_asteroid_mined(self, asteroid_entity, amount, hit_type: HitType = HitType.NORMAL):
         """Handle the asteroid mined event"""
         print(f"Effect manager received asteroid mined signal for asteroid at ({asteroid_entity.x}, {asteroid_entity.y})")
         # Position effect above the asteroid, accounting for its radius
         y_offset = asteroid_entity.get_collision_radius() + ITEM_POPUP_OFFSET
-        self.add_effect(asteroid_entity.ore_type, asteroid_entity.x, asteroid_entity.y + y_offset, amount)
+        self.add_effect(asteroid_entity.ore_type, asteroid_entity.x, asteroid_entity.y + y_offset, amount, hit_type)
 
     def render(self):
         """Render all active effects and update their state"""
