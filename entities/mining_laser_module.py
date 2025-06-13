@@ -2,35 +2,30 @@
 Mining Laser Module - mines ore from nearby asteroids
 """
 
-import math
 import random
-from entities.base_module import BaseModule
 import time
-import arcade
+
 from blinker import Signal
-from game_state.inventory_types import InventoryType, HitType
+
+from audio.audio_engine import AudioEngine
+from audio.sound_bank import SoundBank
+from entities.base_module import BaseModule
+from game_state.inventory_types import HitType, InventoryType
+from game_state.game_events import on_asteroid_mined
+
 
 # Mining Laser Constants - Easy to tune
 MINING_RANGE = 200                   # Maximum mining distance in pixels
-ORE_PER_CYCLE = 20                   # Amount of ore mined per activation (10x)
-
-# Critical Hit Constants
-CRITICAL_HIT_CHANCE = 0.25          # 25% chance for critical hit
-SUPER_CRITICAL_HIT_CHANCE = 0.05    # 5% chance for super critical hit
-CRITICAL_MULTIPLIER = 1.25          # 25% more ore for critical hits
-SUPER_CRITICAL_MULTIPLIER = 1.5     # 50% more ore for super critical hits
+ORE_PER_CYCLE = 20                   # Amount of ore mined per activation
 
 # Audio effect constants
-LASER_SOUND = arcade.Sound("assets/audio/laser-beam.wav")
-ORE_MINED_SOUND = arcade.Sound("assets/audio/success.wav")
 LASER_SOUND_VOLUME = 0.5  # Volume level (0.0 to 1.0)
-FADE_OUT_DURATION = 0.5  # Duration of fade out in seconds
 
 class MiningLaserModule(BaseModule):
     """Mining laser module that extracts ore from nearby asteroids"""
     
     # Override cycle times
-    CYCLE_ACTIVE_TIME = 15.0  # How long laser beam stays visible
+    CYCLE_ACTIVE_TIME = 3.0  # How long laser beam stays visible
     CYCLE_COOLDOWN_TIME = 1.0  # Total cycle time in seconds
     
     def __init__(self):
@@ -44,23 +39,9 @@ class MiningLaserModule(BaseModule):
         self.mining_range = MINING_RANGE
         self.ore_per_cycle = ORE_PER_CYCLE
         
-        # Statistics
-        self.total_ore_mined = 0
-        self.last_mined_ore_type = None
-        self.last_mined_amount = 0
-        self.last_hit_type = HitType.NORMAL  # Track the last hit type for visual feedback
-        
         # Visual effects
         self.current_target = None  # Currently targeted asteroid for visual effects
         self.active_timer = 0.0     # Timer for active state
-        
-        # Audio
-        self.laser_sound_playback = None
-        self.fade_out_timer = 0.0
-        self.is_fading_out = False
-        
-        # Signal for when ore is mined
-        self.on_ore_mined = Signal()
     
     def _determine_hit_type(self) -> tuple[HitType, float]:
         """Determine the type of hit and its multiplier based on random rolls
@@ -100,9 +81,6 @@ class MiningLaserModule(BaseModule):
         if target_asteroid is None:
             # No asteroids in range
             self.current_target = None
-            self.last_mined_amount = 0
-            self.last_mined_ore_type = None
-            self.last_hit_type = HitType.NORMAL
             return False
         
         # Store target for visual effects and register laser beam
@@ -110,82 +88,91 @@ class MiningLaserModule(BaseModule):
         target_asteroid.start_mining(self)
         return True
     
-    def on_module_effect_end(self):
-        """
-        Called when the module effect ends - mine the targeted asteroid
+    def _calculate_mining_amount(self, remaining_ore: int) -> tuple[int, HitType]:
+        """Calculate how much ore to mine based on hit type and remaining ore.
         
+        Args:
+            remaining_ore: Amount of ore remaining in the asteroid
+            
         Returns:
-            bool: True if mining was successful
+            tuple[int, HitType]: Amount to mine and the hit type
         """
+        hit_type, multiplier = self._determine_hit_type()
+        base_amount = min(self.ore_per_cycle, remaining_ore)
+        return int(base_amount * multiplier), hit_type
+
+
+    def _transfer_ore(self, ship_entity, ore_type: InventoryType, amount: int, hit_type: HitType) -> bool:
+        """Transfer ore from asteroid to ship inventory.
+        
+        Args:
+            ship_entity: The ship to transfer ore to
+            ore_type: Type of ore to transfer
+            amount: Amount to transfer
+            hit_type: Type of mining hit
+            
+        Returns:
+            bool: True if transfer was successful
+        """
+        # First try to mine from asteroid
+        if not self.current_target.inventory.remove_item(self.current_target.ore_type, amount):
+            print("Mining failed: Could not mine ore from asteroid: {} / {} ".format(amount, self.current_target.inventory.get_item_quantity(self.current_target.ore_type)))
+            return False
+
+        # Add to ship inventory
+        if not ship_entity.inventory.add_item(ore_type, amount):
+            print("Transfer failed: Could not transfer ore from asteroid.")
+            return False
+            
+        return True
+
+    def on_module_effect_end(self, ship_entity):
+        """Called when the module effect ends - mine the targeted asteroid"""
+        if not self._validate_mining_state(ship_entity):
+            return False
+            
+        # Calculate mining amount
+        remaining_ore = self.current_target.inventory.get_item_quantity(self.current_target.ore_type)
+        mining_amount, hit_type = self._calculate_mining_amount(remaining_ore)
+
+        # Calculate how much will fit in ship inventory
+        available_space = ship_entity.inventory.get_available_space()
+        actual_amount = min(mining_amount, available_space)
+
+        if actual_amount <= 0:
+            print("Mining failed: Inventory full.")
+            AudioEngine.get_instance().play_sound(SoundBank.WARNING)
+            return False
+
+        # Transfer the ore
+        if not self._transfer_ore(ship_entity, self.current_target.ore_type, actual_amount, hit_type):
+            print("Mining failed: Could not transfer ore to ship inventory.", actual_amount)
+            return False
+        else:
+            on_asteroid_mined.send(self.current_target, amount=actual_amount, hit_type=hit_type)
+
+        # Update stats and play effects
+        self._play_ore_mined_sound(self.current_target.ore_type, actual_amount, hit_type)
+
+        return True
+
+    def _validate_mining_state(self, ship_entity) -> bool:
+        """Validate that mining can proceed."""
         if self.current_target is None:
             print("Mining failed: No target asteroid")
             return False
             
-        # Get the remaining ore amount
+        if not ship_entity or not ship_entity.inventory:
+            print("Mining failed: No player inventory available")
+            return False
+            
         remaining_ore = self.current_target.inventory.get_item_quantity(self.current_target.ore_type)
         if remaining_ore <= 0:
             print("Mining failed: Asteroid is depleted")
-            self.last_mined_amount = 0
-            self.last_mined_ore_type = None
-            self.last_hit_type = HitType.NORMAL
             return False
-        
-        # Determine hit type and multiplier
-        hit_type, multiplier = self._determine_hit_type()
-        self.last_hit_type = hit_type
             
-        # Calculate how much we can mine (either full cycle or remaining amount)
-        base_mining_amount = min(self.ore_per_cycle, remaining_ore)
-        mining_amount = int(base_mining_amount * multiplier)
-            
-        print(f"Attempting to mine {mining_amount} units of {self.current_target.ore_type}")
-        # Mine ore from the target asteroid
-        success = self.current_target.mine_ore(mining_amount, hit_type)
-        
-        if success:
-            # Update mining stats
-            self.last_mined_amount = mining_amount
-            self.last_mined_ore_type = self.current_target.ore_type
-            self.total_ore_mined += mining_amount
+        return True
 
-            self._play_ore_mined_sound()
-            
-            print(f"Mining successful! Emitting signal for {mining_amount} units of {self.current_target.ore_type}")
-            # Emit signal with mined ore details
-            self.on_ore_mined.send(
-                self,
-                ore_type=self.current_target.ore_type,
-                amount=mining_amount,
-                hit_type=hit_type
-            )
-            return True
-        else:
-            # No ore was mined (asteroid was already depleted)
-            self.last_mined_amount = 0
-            self.last_mined_ore_type = None
-            self.last_hit_type = HitType.NORMAL
-            print("Mining failed: No ore mined (asteroid depleted).")
-            return False
-    
-    def get_mining_stats(self):
-        """Get mining statistics for this module"""
-        return {
-            'total_ore_mined': self.total_ore_mined,
-            'last_mined_ore_type': self.last_mined_ore_type,
-            'last_mined_amount': self.last_mined_amount
-        }
-    
-    def get_status_text(self):
-        """Get current status text for UI display"""
-        if self.state == "ready":
-            return "Mining Laser Ready"
-        elif self.state == "cooling_down":
-            return f"Recharging... ({self.cooldown_remaining:.1f}s)"
-        elif self.state == "active":
-            return "Firing Laser!"
-        else:
-            return "Mining Laser"
-    
     def _on_cooldown_complete(self):
         """Called when cooldown period ends"""
         # Could play a sound effect or show notification
@@ -197,32 +184,37 @@ class MiningLaserModule(BaseModule):
         if self.current_target:
             self.current_target.stop_mining()
         self.current_target = None
-        self._start_fade_out()
-    
+
     def _play_laser_sound(self):
-        """Play the laser beam sound effect in a loop"""
-        if not self.laser_sound_playback:
-            self.laser_sound_playback = arcade.play_sound(LASER_SOUND, volume=LASER_SOUND_VOLUME, loop=True)
-            self.is_fading_out = False
-            self.fade_out_timer = 0.0
+        AudioEngine.get_instance().play_sound(SoundBank.LASER_BEAM, duration=self.CYCLE_ACTIVE_TIME, loop=False)
 
-    def _play_ore_mined_sound(self):
-        """Play sound effect when ore is successfully mined"""
-        ORE_MINED_SOUND.play()
-
-    def _start_fade_out(self):
-        """Start fading out the laser sound"""
-        if self.laser_sound_playback and not self.is_fading_out:
-            self.is_fading_out = True
-            self.fade_out_timer = 0.0
-
-    def _stop_laser_sound(self):
-        """Stop the laser beam sound effect"""
-        if self.laser_sound_playback:
-            arcade.stop_sound(self.laser_sound_playback)
-            self.laser_sound_playback = None
-            self.is_fading_out = False
-            self.fade_out_timer = 0.0
+    def _play_ore_mined_sound(self, ore_type, amount, hit_type):
+        """Play sound effect when ore is successfully mined
+        
+        Args:
+            ore_type: Type of ore that was mined
+            amount: Amount of ore mined
+            hit_type: Type of mining hit (normal, critical, super critical)
+        """
+        # Base volume for normal hits
+        base_volume = 0.5
+        
+        # Adjust volume and pitch based on hit type
+        if hit_type == HitType.SUPER_CRITICAL:
+            volume = base_volume * 1.5  # 50% louder
+            pitch_shift = 1.5  # Higher pitch for super critical
+        elif hit_type == HitType.CRITICAL:
+            volume = base_volume * 1.25  # 25% louder
+            pitch_shift = 1.25  # Higher pitch for critical
+        else:
+            volume = base_volume
+            pitch_shift = 1.0  # Normal pitch
+            
+        AudioEngine.get_instance().play_sound(
+            SoundBank.SUCCESS,
+            volume=volume,
+            pitch_shift=pitch_shift
+        )
 
     def _update_active_state(self, delta_time):
         """Update module while in active state - keep laser visible briefly"""
@@ -231,7 +223,7 @@ class MiningLaserModule(BaseModule):
         # After active duration, execute end effect and start cooldown
         if self.active_timer >= self.CYCLE_ACTIVE_TIME:
             self.active_timer = 0.0
-            self.on_module_effect_end()
+            self.on_module_effect_end(self.fitted_to_ship_entity)
             self._start_cooldown()
     
     def activate(self, ship_entity):
@@ -267,19 +259,3 @@ class MiningLaserModule(BaseModule):
     def update(self, delta_time):
         """Update module state including sound effects"""
         super().update(delta_time)
-        
-        # Handle sound fade out
-        if self.is_fading_out and self.laser_sound_playback:
-            self.fade_out_timer += delta_time
-            if self.fade_out_timer >= FADE_OUT_DURATION:
-                self._stop_laser_sound()
-            else:
-                # Calculate new volume based on fade progress
-                fade_progress = self.fade_out_timer / FADE_OUT_DURATION
-                new_volume = LASER_SOUND_VOLUME * (1.0 - fade_progress)
-                self.laser_sound_playback.volume = new_volume
-
-    def equip_to_ship(self, ship_entity):
-        """Connect the ore_mined signal to the ship's inventory handler"""
-        super().equip_to_ship(ship_entity)
-        self.on_ore_mined.connect(ship_entity._on_ore_mined) 

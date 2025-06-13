@@ -35,6 +35,7 @@ class BaseModule(ABC):
         self.state = ModuleState.READY
         self.cooldown_remaining = 0.0
         self.last_activation_time = 0.0
+        self.fitted_to_ship_entity = None
         
         # Module properties
         self.active = True
@@ -125,6 +126,7 @@ class BaseModule(ABC):
         self.equipped = True
         # Find our index in the ship's module list
         self.module_index = ship_entity.modules.index(self)
+        self.fitted_to_ship_entity = ship_entity
         self._on_equipped(ship_entity)
     
     def unequip_from_ship(self, ship_entity):

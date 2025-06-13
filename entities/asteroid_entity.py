@@ -6,12 +6,12 @@ import random
 
 import arcade
 
+from audio.audio_engine import AudioEngine
+from audio.sound_bank import SoundBank
 from entities.base_entity import BaseEntity
 from game_state.inventory import Inventory
 from game_state.inventory_types import InventoryType
 from game_state.game_events import on_asteroid_mined
-
-DEPLETED_SOUND = arcade.Sound("assets/audio/mining-blast.wav")
 
 # Asteroid Constants - Easy to tune
 ASTEROID_TYPES_COUNT = 6           # Number of different asteroid textures (1-6)
@@ -92,6 +92,7 @@ class AsteroidEntity(BaseEntity):
         
         # Check if asteroid is depleted
         if self.is_depleted():
+            AudioEngine.get_instance().play_sound(SoundBank.MINING_BLAST)
             self.destroy()
             
     def start_mining(self, mining_module):
@@ -101,21 +102,6 @@ class AsteroidEntity(BaseEntity):
     def stop_mining(self):
         """Stop mining this asteroid"""
         self.active_mining_module = None
-        
-    def mine_ore(self, amount, hit_type=None):
-        """Mine ore from the asteroid"""
-        if not self.inventory:
-            return False
-
-        success = self.inventory.remove_item(self.ore_type, amount)
-        if success:
-            # Emit the asteroid mined signal
-            on_asteroid_mined.send(self, amount=amount, hit_type=hit_type)
-
-        if self.is_depleted():
-            DEPLETED_SOUND.play()
-            
-        return success
         
     def get_collision_radius(self):
         """Get the collision radius based on asteroid type and scale"""

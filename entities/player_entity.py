@@ -6,6 +6,8 @@ import math
 
 import arcade
 
+from audio.audio_engine import AudioEngine
+from audio.sound_bank import SoundBank
 from entities.base_entity import BaseEntity
 from input.commands import InputCommand
 from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
@@ -27,8 +29,6 @@ MODULE_LOCATORS = [
     (30, -15),   # Bottom
     (30, 15),    # Top
 ]
-
-INVENTORY_FULL_SOUND = arcade.load_sound("assets/audio/warning.wav")
 
 class PlayerEntity(BaseEntity):
     """Player spaceship entity with rotation and thrust physics"""
@@ -63,7 +63,7 @@ class PlayerEntity(BaseEntity):
 
     def check_play_inventory_full_sound(self):
         if self.inventory.get_total_units() / self.inventory.max_units > 0.9:
-            INVENTORY_FULL_SOUND.play()
+            AudioEngine.get_instance().play_sound(SoundBank.WARNING)
 
     def update(self, delta_time, input_commands=None):
         """Update player logic based on input and physics"""

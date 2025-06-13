@@ -122,11 +122,11 @@ class HitType(Enum):
     def chance(self) -> float:
         """Get the base chance for this hit type"""
         if self == HitType.NORMAL:
-            return 0.70  # 70%
+            return 0.50  # 70%
         elif self == HitType.CRITICAL:
-            return 0.25  # 25%
+            return 0.35  # 25%
         elif self == HitType.SUPER_CRITICAL:
-            return 0.05  # 5%
+            return 0.15  # 5%
 
     @property
     def name_display(self) -> str:

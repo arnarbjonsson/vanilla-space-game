@@ -72,7 +72,8 @@ class AsteroidRenderer(BaseRenderer):
         """Draw the mining cycle gauge around the asteroid"""
         # Calculate gauge radius (slightly larger than asteroid)
         asteroid_radius = asteroid.get_collision_radius()
-        gauge_radius = asteroid_radius + self.GAUGE_OFFSET
+        # gauge_radius = asteroid_radius + self.GAUGE_OFFSET
+        gauge_radius = 50
         
         # Draw background circle
         arcade.draw_arc_outline(
@@ -90,8 +91,6 @@ class AsteroidRenderer(BaseRenderer):
         progress = asteroid.active_mining_module.get_cycle_progress()
         angle = 360 * progress
 
-        print("progress", progress, "angle", angle)
-        
         # Draw progress arc1
         arcade.draw_arc_outline(
             asteroid.x,

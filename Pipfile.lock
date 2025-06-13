@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1be4cf5d353d7c6fbb19aaaf6e754be82db2fa6d691eccea1ba311c977168f50"
+            "sha256": "bae4cc99935a38b20fd733dee354bab3fe0e24aa79d682d9b146662c4f5f8a5a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -267,6 +267,32 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==6.9.0"
+        },
+        "pyo": {
+            "hashes": [
+                "sha256:0e93466fa5c417ccf17c80c4e476047d4d12582e84ccbfd19c289a018212a8dc",
+                "sha256:19f6c55c9810527a99a98d31fb81a1e5ba451f5767c7cf858826402d4844f9c4",
+                "sha256:2034c1c5e22c7de4a400d1967c50d217bdd3bed68f1d2eb50b7a01d3d3454ab4",
+                "sha256:34a6ca33ee3e50a69078a2e5c8897921bc892446806cb1efd61ee9a3d3691c0b",
+                "sha256:3b2e00a30123235c5b84ed9e5c4644ad6dd7d3053464d8b8e659c9ca96a01810",
+                "sha256:3c63223452fb2ea4b97400d749ef44c3c281cfb00fea9dcb480317435c3b9ea1",
+                "sha256:430f1df284090dea0dea582507d5437de71305e1706f2402743628163882e672",
+                "sha256:664af552a800011f4f91162c33990171e388200c18ac43a530be24e0e2122ce5",
+                "sha256:7555ef42a1e413f1a1c86b546cfb40b51b4019944712666b364871034ceab107",
+                "sha256:7bdf11a32640ac3b8d32187ef9f76dd8fa3a811222563083c911ccc6b3b6faf1",
+                "sha256:8cb21f92ac51e2c76b0701004687dc67df3708f39c9c9d5eccbd77c2434dc8e6",
+                "sha256:9c0806d3b22045b9baf2de97a389db4f56d73edeafeea00a11fdb7fb6c0d7ecc",
+                "sha256:9f7437b48e8d5ada913050b0f99ae14cf8f2ac82f80e0fa228034a94acd64102",
+                "sha256:ae2e2df726e9cec1f554370d02b784bb8d7d47552fcfcd0dda194928d2ad16e9",
+                "sha256:dc486007c1e16dea08509561052702fee43000be13c093a813cd94cb8f7483f8",
+                "sha256:e042d947a0b641b400e228f9e21eeca21df8bf4895c6dbd013f87638d7728e31",
+                "sha256:e35fec62e7e0a73b950546135823e02adc44312629576f0bb4df319f86b4e495",
+                "sha256:e8219cf3169c50851646bdb1c753e420b8916b3e1992667f876be760dd40c007",
+                "sha256:f047d3bafdd2438099774254377d64923ffc090db5bd4bb49cb33416e9d6ee2f"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7' and python_version < '4'",
+            "version": "==1.0.5"
         },
         "pytiled-parser": {
             "hashes": [
