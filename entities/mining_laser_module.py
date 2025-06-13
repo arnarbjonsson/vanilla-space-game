@@ -186,7 +186,7 @@ class MiningLaserModule(BaseModule):
         self.current_target = None
 
     def _play_laser_sound(self):
-        AudioEngine.get_instance().play_sound(SoundBank.LASER_BEAM, duration=self.CYCLE_ACTIVE_TIME, loop=False)
+        AudioEngine.get_instance().play_sound(SoundBank.LASER_BEAM, duration=self.CYCLE_ACTIVE_TIME, loop=False, volume=0.05)
 
     def _play_ore_mined_sound(self, ore_type, amount, hit_type):
         """Play sound effect when ore is successfully mined
@@ -197,14 +197,14 @@ class MiningLaserModule(BaseModule):
             hit_type: Type of mining hit (normal, critical, super critical)
         """
         # Base volume for normal hits
-        base_volume = 0.5
+        base_volume = 0.3
         
         # Adjust volume and pitch based on hit type
         if hit_type == HitType.SUPER_CRITICAL:
-            volume = base_volume * 1.5  # 50% louder
+            volume = base_volume * 2.0  # 50% louder
             pitch_shift = 1.5  # Higher pitch for super critical
         elif hit_type == HitType.CRITICAL:
-            volume = base_volume * 1.25  # 25% louder
+            volume = base_volume * 3.0  # 25% louder
             pitch_shift = 1.25  # Higher pitch for critical
         else:
             volume = base_volume

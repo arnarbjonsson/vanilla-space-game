@@ -74,13 +74,13 @@ class AudioEngine:
             print(f"Sound not found: {sound.name}")
             return
 
-        player = TableRead(table=table, freq=table.getRate() * pitch_shift, loop=False, mul=volume).out()
+        player = TableRead(table=table, freq=table.getRate() * pitch_shift, loop=loop, mul=volume).out()
 
         if not duration:
             duration = table.getSize() / table.getRate()
         
         self._track(player, duration)
-            
+
     def play_chord(self, base_freq=440, amp=0.1, spread=0.1, dur=1.0):
         """
         Play a broken chord (arpeggio) with three notes that fade in and out smoothly,
@@ -150,42 +150,6 @@ class AudioEngine:
 
         return total_dur  # Return total duration of the chord
 
-    def play_bling(self, base_freq=880, amp=0.2, dur=0.15):
-        """
-        Play a short, bright 'bling' sound.
-        Args:
-            base_freq: Base frequency for the sound (default 880Hz - A5)
-            amp: Amplitude for the sound (default 0.2)
-        """
-        from pyo import Sine, Pan, Noise, ButHP
-
-        # Duration settings
-
-        # Create master fade envelope for the whole sound
-        master_fade = Fader(fadein=0.001, fadeout=0.1, dur=dur).play()
-
-        # Main high-frequency tone with fast decay
-        main = Sine(freq=base_freq, mul=master_fade * amp)
-        main_pan = Pan(main, pan=0.2).out()
-
-        # Higher harmonics for brightness
-        harmonic1 = Sine(freq=base_freq * 2, mul=master_fade * amp * 0.3)
-        harmonic1_pan = Pan(harmonic1, pan=-0.2).out()
-
-        # Add some filtered noise for initial "tink"
-        noise = Noise(mul=master_fade * amp * 0.1)
-        bright = ButHP(noise, freq=5000).out()
-
-        # Track everything
-        self._track(master_fade, dur)
-        self._track(main, dur)
-        self._track(main_pan, dur)
-        self._track(harmonic1, dur)
-        self._track(harmonic1_pan, dur)
-        self._track(noise, dur)
-        self._track(bright, dur)
-
-        return dur
 
 
 if __name__ == "__main__":
