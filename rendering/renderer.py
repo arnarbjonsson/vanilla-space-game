@@ -6,11 +6,13 @@ import arcade
 from core.constants import *
 from entities.player_entity import PlayerEntity
 from entities.asteroid_entity import AsteroidEntity
+from entities.mobile_depot import MobileDepot
 from game_state.game_state import GameState
 from rendering.player_renderer import PlayerRenderer
 from rendering.asteroid_renderer import AsteroidRenderer
 from rendering.background_renderer import BackgroundRenderer
 from rendering.effects_renderer import EffectsRenderer
+from rendering.mobile_depot_renderer import MobileDepotRenderer
 from ui.ui_renderer import UIRenderer
 from rendering.mined_item_effect_manager import MinedItemEffectManager
 
@@ -23,6 +25,7 @@ class Renderer:
         self.background_renderer = BackgroundRenderer()
         self.player_renderer = PlayerRenderer()
         self.asteroid_renderers = {}  # Map of asteroid entities to their renderers
+        self.mobile_depot_renderers = {}  # Map of mobile depot entities to their renderers
         self.effects_renderer = EffectsRenderer()
         self.ui_renderer = UIRenderer(game_state=game_state)
         self.mined_item_effect_manager = MinedItemEffectManager()
@@ -70,5 +73,11 @@ class Renderer:
                     renderer = AsteroidRenderer(entity)
                     self.asteroid_renderers[entity] = renderer
                 self.asteroid_renderers[entity].render(entity)
+            elif isinstance(entity, MobileDepot):
+                # Get or create renderer for this mobile depot
+                if entity not in self.mobile_depot_renderers:
+                    renderer = MobileDepotRenderer(entity)
+                    self.mobile_depot_renderers[entity] = renderer
+                self.mobile_depot_renderers[entity].render()
 
         self.player_renderer.render(game_state.player_entity)

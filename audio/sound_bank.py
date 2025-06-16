@@ -5,3 +5,4 @@ class SoundBank(Enum):
     MINING_BLAST = "assets/audio/mining-blast.wav"
     SUCCESS = "assets/audio/success.wav"
     WARNING = "assets/audio/warning.wav"
+    MINERAL_PICKUP = "assets/audio/mineral_pickup.wav"

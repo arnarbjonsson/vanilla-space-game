@@ -63,6 +63,8 @@ class Inventory:
             return False
         
         self.items[item_type] -= amount
+        if self.items[item_type] <= 0:
+            del self.items[item_type]
         self.on_items_removed.send(self, item_type=item_type, quantity=amount)
         return True
     

@@ -7,6 +7,7 @@ from game_state.game_state import GameState
 from entities.player_entity import PlayerEntity
 from entities.asteroid_entity import AsteroidEntity
 from entities.mining_laser_module import MiningLaserModule
+from entities.mobile_depot import MobileDepot
 from input.commands import InputCommand
 from core.constants import SCREEN_WIDTH, SCREEN_HEIGHT
 
@@ -34,6 +35,10 @@ class StateManager:
         # Auto-equip mining laser for testing
         player.equip_module(MiningLaserModule())
         player.equip_module(MiningLaserModule())
+
+        # Create mobile depot at center of screen
+        depot = MobileDepot(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, self.game_state)
+        self.game_state.add_entity(depot)
 
         # Create some test asteroids
         self._spawn_initial_asteroids()

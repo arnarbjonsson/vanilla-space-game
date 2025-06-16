@@ -197,7 +197,7 @@ class MiningLaserModule(BaseModule):
             hit_type: Type of mining hit (normal, critical, super critical)
         """
         # Base volume for normal hits
-        base_volume = 0.3
+        base_volume = 0.1
         
         # Adjust volume and pitch based on hit type
         if hit_type == HitType.SUPER_CRITICAL:
