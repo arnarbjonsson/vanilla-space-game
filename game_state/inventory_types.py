@@ -18,7 +18,7 @@ class InventoryType(Enum):
     # Minerals (processed from ores)
     # Basic Minerals
     TRITANIUM = auto()         # Basic mineral, used in almost everything
-    PLEXITE = auto()           # Basic mineral, used in many structures
+    PYERITE = auto()           # Basic mineral, used in many structures
     MEXALLON = auto()          # Basic mineral, used in many structures
     ISOGEN = auto()            # Basic mineral, used in many structures
     
@@ -61,7 +61,7 @@ INVENTORY_ICONS: Dict[InventoryType, str] = {
     
     # Basic Minerals
     InventoryType.TRITANIUM: "assets/icons/types/tritanium.png",
-    InventoryType.PLEXITE: "assets/icons/types/plexite.png",
+    InventoryType.PYERITE: "assets/icons/types/Pyerite.png",
     InventoryType.MEXALLON: "assets/icons/types/mexallon.png",
     InventoryType.ISOGEN: "assets/icons/types/isogen.png",
     
@@ -78,27 +78,26 @@ INVENTORY_ICONS: Dict[InventoryType, str] = {
 # Define ore to mineral conversion rates
 ORE_MINERAL_RATES: Dict[InventoryType, Dict[InventoryType, float]] = {
     InventoryType.VELDSPAR: {
-        InventoryType.TRITANIUM: 0.4,  # 40% Tritanium
-        InventoryType.PLEXITE: 0.1,    # 10% Plexite
+        InventoryType.TRITANIUM: 1.0,  # 40% Tritanium
     },
     InventoryType.SCORDITE: {
-        InventoryType.TRITANIUM: 0.3,  # 30% Tritanium
-        InventoryType.PLEXITE: 0.2,    # 20% Plexite
+        InventoryType.TRITANIUM: 0.60,  # 30% Tritanium
+        InventoryType.PYERITE: 0.4,    # 20% Pyerite
     },
     InventoryType.PYROXERES: {
-        InventoryType.TRITANIUM: 0.2,  # 20% Tritanium
-        InventoryType.PLEXITE: 0.3,    # 30% Plexite
+        InventoryType.TRITANIUM: 0.4,  # 20% Tritanium
+        InventoryType.PYERITE: 0.5,    # 30% Pyerite
         InventoryType.MEXALLON: 0.1,   # 10% Mexallon
     },
     InventoryType.PLAGIOCLASE: {
-        InventoryType.TRITANIUM: 0.1,  # 10% Tritanium
-        InventoryType.PLEXITE: 0.2,    # 20% Plexite
-        InventoryType.MEXALLON: 0.2,   # 20% Mexallon
+        InventoryType.TRITANIUM: 0.2,  # 10% Tritanium
+        InventoryType.PYERITE: 0.4,    # 20% Pyerite
+        InventoryType.MEXALLON: 0.4,   # 20% Mexallon
     },
     InventoryType.OMBER: {
-        InventoryType.TRITANIUM: 0.1,  # 10% Tritanium
-        InventoryType.PLEXITE: 0.2,    # 20% Plexite
-        InventoryType.ISOGEN: 0.1,     # 10% Isogen
+        InventoryType.TRITANIUM: 0.25,  # 10% Tritanium
+        InventoryType.PYERITE: 0.50,    # 20% Pyerite
+        InventoryType.ISOGEN: 0.25,     # 10% Isogen
     }
 }
 

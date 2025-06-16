@@ -6,6 +6,7 @@ from audio.sound_bank import SoundBank
 from entities.base_entity import BaseEntity
 from entities.player_entity import PlayerEntity
 from game_state.inventory import Inventory
+from game_state.inventory_types import ORE_MINERAL_RATES, ORE_TYPES
 
 # Mobile Depot Constants
 MOBILE_DEPOT_INVENTORY_SIZE = 1000  # Much larger than player inventory
@@ -13,7 +14,7 @@ MOBILE_DEPOT_COLLISION_RADIUS = 60  # Size of the depot for collision detection
 MOBILE_DEPOT_TRANSFER_RANGE = 50   # Range at which items are automatically transferred
 
 class MobileDepot(BaseEntity):
-    """Stationary container entity that can store large amounts of items"""
+    """Stationary container entity that can store large amounts of items and convert ore to minerals"""
     
     def __init__(self, x, y, game_state):
         """Initialize the mobile depot entity
@@ -68,7 +69,8 @@ class MobileDepot(BaseEntity):
         return distance <= MOBILE_DEPOT_TRANSFER_RANGE
         
     def transfer_items_from(self, other_entity) -> bool:
-        """Transfer all items from another entity's inventory to this depot
+        """Transfer all items from another entity's inventory to this depot,
+        converting ore to minerals in the process
         
         Args:
             other_entity: The entity to transfer items from
@@ -81,9 +83,23 @@ class MobileDepot(BaseEntity):
             
         items_transferred = False
         for item_type, quantity in other_entity.inventory.get_all_items().items():
-            if self.inventory.add_item(item_type, quantity):
-                other_entity.inventory.remove_item(item_type, quantity)
-                items_transferred = True
+            # Remove items from the other entity first
+            other_entity.inventory.remove_item(item_type, quantity)
+            
+            # Check if this is ore that should be converted to minerals
+            if item_type in ORE_TYPES and item_type in ORE_MINERAL_RATES:
+                # Convert ore to minerals
+                conversion_rates = ORE_MINERAL_RATES[item_type]
+                for mineral_type, conversion_rate in conversion_rates.items():
+                    mineral_quantity = int(quantity * conversion_rate)
+                    if mineral_quantity > 0:
+                        self.inventory.add_item(mineral_type, mineral_quantity)
+                print(f"Converted {quantity} {item_type.name} to minerals")
+            else:
+                # Add non-ore items directly
+                self.inventory.add_item(item_type, quantity)
+            
+            items_transferred = True
 
         if items_transferred:
             AudioEngine.get_instance().play_sound(SoundBank.MINERAL_PICKUP)
